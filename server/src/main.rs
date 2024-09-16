@@ -7,7 +7,7 @@ use socketioxide::{
     extract::{Data, SocketRef, State},
     SocketIo,
 };
-use tokio::time::{sleep, Duration};
+use tokio::time::{sleep, Instant, Duration};
 use tokio::sync::RwLock;
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
@@ -17,6 +17,10 @@ use serde_json::json;
 
 async fn on_connect(socket: SocketRef) {
     info!("socket connected: {}", socket.id);
+
+    // todo!("Accept msg to set joint positions");
+
+    // todo!("Accept msg to set to set end effector position");
 
     // socket.on(
     //     "message",
@@ -46,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Enables logging
     tracing::subscriber::set_global_default(FmtSubscriber::default())?;
     
-    let robot_sim = Arc::new(RwLock::new(robot::Robot::default()));
+    let robot_sim = robot::Robot::new();
 
     let (layer, io) = SocketIo::builder().with_state(robot_sim.clone()).build_layer();
 
@@ -73,11 +77,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Task to send a message every second
     tokio::spawn(async move {
         loop {
-            // Send a message to the client
-            let robot = c_lock.read().await; {
-                let _ = io_handler.read().await.emit("state", robot.state.clone());
+            let start = Instant::now();
+            // Send a status message to the client
+            {
+                let robot = c_lock.read().await; 
+                let _ = io_handler.read().await.emit("state", robot.state.elbow_rotation_deg.clone());
             }
-            sleep(Duration::from_secs(1)).await;
+
+
+            let loop_duration = Instant::now().duration_since(start);
+            if let Some(sleep_duration) = Duration::from_millis(1000).checked_sub(loop_duration) {
+                sleep(sleep_duration).await;
+            }
+            
         }
     });
 

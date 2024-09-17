@@ -3,6 +3,7 @@ mod robot;
 use std::sync::Arc;
 
 use axum::routing::get;
+use robot::{RobotState, RobotLock};
 use socketioxide::{
     extract::{Data, SocketRef, State},
     SocketIo,
@@ -13,7 +14,6 @@ use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tracing::info;
 use tracing_subscriber::FmtSubscriber;
-use serde_json::json;
 
 async fn on_connect(socket: SocketRef) {
     info!("socket connected: {}", socket.id);
@@ -22,22 +22,17 @@ async fn on_connect(socket: SocketRef) {
 
     // todo!("Accept msg to set to set end effector position");
 
-    // socket.on(
-    //     "message",
-    //     |socket: SocketRef, Data::<MessageIn>(data), store: State<state::MessageStore>| async move {
-    //         info!("Received message: {:?}", data);
+    socket.on(
+        "set joint state",
+        |Data::<RobotState>(data), robot_lock: State<RobotLock>| async move {
+            info!("Set state {}", data.elbow_rotation_deg);
+            
+            {
+                robot_lock.write().await.set_target_state(data);
+            }
+        },
+    );
 
-    //         let response = state::Message {
-    //             text: data.text,
-    //             user: format!("anon-{}", socket.id),
-    //             date: chrono::Utc::now(),
-    //         };
-
-    //         store.insert(&data.room, response.clone()).await;
-
-    //         let _ = socket.within(data.room).emit("message", response);
-    //     },
-    // )
 
     socket.on_disconnect(|| async move {
         info!("Client disconnected");
@@ -50,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Enables logging
     tracing::subscriber::set_global_default(FmtSubscriber::default())?;
     
-    let robot_sim = robot::Robot::new();
+    let robot_sim: RobotLock = robot::Robot::new();
 
     let (layer, io) = SocketIo::builder().with_state(robot_sim.clone()).build_layer();
 
@@ -69,8 +64,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
 
     info!("Starting server");
-
-    let c_lock = robot_sim.clone();
+    
+    // Remove
+    let c_lock: RobotLock = robot_sim.clone();
 
     // let n = robot_sim.state.read().await;
 
@@ -80,8 +76,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let start = Instant::now();
             // Send a status message to the client
             {
-                let robot = c_lock.read().await; 
-                let _ = io_handler.read().await.emit("state", robot.state.elbow_rotation_deg.clone());
+                let robot = c_lock.read().await;
+                let _ = io_handler.read().await.emit("state", robot.state);
             }
 
 

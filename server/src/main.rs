@@ -3,7 +3,7 @@ mod robot;
 use std::sync::Arc;
 
 use axum::routing::get;
-use robot::{RobotState, RobotLock};
+use robot::{robot_state::RobotState, RobotLock};
 use socketioxide::{
     extract::{Data, SocketRef, State},
     SocketIo,

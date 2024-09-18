@@ -76,6 +76,5 @@ impl Robot {
 
     pub fn set_target_state(&mut self, target_state: RobotState){
         self.target_state = target_state;
-        println!("Test {}", self.target_state.elbow_rotation_deg)
     }
 }

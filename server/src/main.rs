@@ -23,7 +23,7 @@ async fn on_connect(socket: SocketRef) {
     // todo!("Accept msg to set to set end effector position");
 
     socket.on(
-        "set joint state",
+        "set actuator state",
         |Data::<RobotState>(data), robot_lock: State<RobotLock>| async move {
             info!("Set state {}", data.elbow_rotation_deg);
             
@@ -82,7 +82,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
             let loop_duration = Instant::now().duration_since(start);
-            if let Some(sleep_duration) = Duration::from_millis(1000).checked_sub(loop_duration) {
+            if let Some(sleep_duration) = Duration::from_millis(20).checked_sub(loop_duration) {
                 sleep(sleep_duration).await;
             }
             

@@ -16,22 +16,24 @@ const ELBOW_WIDTH = 0.3;
 const ELBOW_DEPTH = 0.5;
 
 const WRIST_LENGTH = 1; // Important for IK
-const WRIST_WIDTH = 0.3;
-const WRIST_DEPTH = 0.4;
+const WRIST_WIDTH = 0.25;
+const WRIST_DEPTH = 0.35;
 
 const WRIST_STEM_LENGTH = WRIST_WIDTH+ELBOW_WIDTH;
 const WRIST_STEM_RADIUS = 0.2;
 
 const GRIPPER_BASE_LENGTH = 0.6;
 const GRIPPER_BASE_WIDTH = 0.1;
-const GRIPPER_BASE_DEPTH = 0.4;
+const GRIPPER_BASE_DEPTH = 0.3;
 
-const GRIPPER_STEM_LENGTH = 0.7;
+const GRIPPER_STEM_LENGTH = 0.6;
 const GRIPPER_STEM_RADIUS = 0.15;
 
 const GRIPPERS_HEIGHT = 0.05;
-const GRIPPERS_WIDTH = 0.4;
+const GRIPPERS_WIDTH = GRIPPER_BASE_DEPTH;
 const GRIPPERS_LENGTH = GRIPPER_BASE_WIDTH+0.2;
+
+const LIFT_ZERO = -LIFT_HEIGHT/2+GRIPPER_STEM_LENGTH+GRIPPERS_LENGTH-GRIPPER_BASE_WIDTH;
 
 
 type RobotVisualizationProps = {
@@ -92,7 +94,7 @@ function RobotVisualization(props: RobotVisualizationProps) {
     
     // swing joint (DOF 1)
     const swingJoint = new THREE.Object3D();
-    swingJoint.position.set(0, BASE_HEIGHT/2, 0)
+    swingJoint.position.set(0, 0, 0)
     base.add(swingJoint);
 
     // Lift. 
@@ -160,7 +162,7 @@ function RobotVisualization(props: RobotVisualizationProps) {
       const state = robotStateRef.current;
       if (state) {
         swingJoint.rotation.y = THREE.MathUtils.degToRad(state.swing_rotation_deg);
-        liftJoint.position.y = state.lift_elevation_mm / 1000; // Convert mm to meters
+        liftJoint.position.y = state.lift_elevation_mm / 1000 + LIFT_ZERO; // Convert mm to meters
         elbowJoint.rotation.x = THREE.MathUtils.degToRad(state.elbow_rotation_deg);
         wristJoint.rotation.x = THREE.MathUtils.degToRad(state.wrist_rotation_deg);
         gripperDynamic.position.y = (state.gripper_open_mm/1000+GRIPPERS_HEIGHT);

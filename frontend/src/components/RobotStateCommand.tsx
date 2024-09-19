@@ -1,14 +1,8 @@
 import React from 'react';
 import socket from '../utils/socket';
 import { useState } from 'react';
-
-type RobotState = {
-  swing_rotation_deg: number;
-  lift_elevation_mm: number;
-  elbow_rotation_deg: number;
-  wrist_rotation_deg: number;
-  gripper_open_mm: number;
-};
+ 
+import { RobotState } from '../types/RobotTypes';
 
 // Initial state values
 const initialState: RobotState = {
@@ -49,7 +43,6 @@ export const RobotStateCommand = () => {
 
     // Emit the "set actuator state" event with the current actuator state
     socket.emit('set actuator state', actuatorState);
-    console.log('Actuator state sent:', actuatorState);
   };
 
   return (

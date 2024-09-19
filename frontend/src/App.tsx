@@ -1,10 +1,7 @@
 
-import { RobotStateCommand } from "./components/RobotStateCommand"
-import { RobotStateDisplay } from "./components/RobotStateDisplay"
+import { Robot } from "./components/Robot"
 import { useState, useEffect, useCallback } from "react"
-import MyThree from "./components/MyThree"
 
-import socket from "./utils/socket"
 
 
 
@@ -22,31 +19,12 @@ function App() {
   // Use for expensive computations to keep from recompiling/rerendering function
   const addTwo = useCallback(() => setCount(prev => prev!=null?prev+2:0), [count])
 
-
-
   return (
     <div>
       <h1>Control Robot</h1>
-      <RobotStateDisplay />
-      <RobotStateCommand />
-      <MyThree />
-
+      <Robot />
     </div>
   );
-  // return (
-  //   <>
-  //     <div>
-  //       <h1> 
-  //         {count}
-  //       </h1>
-  //       <button onClick={addTwo}> </button>
-  //     </div>
-  //     <Heading title={"Helo"} />
-  //     <Section>This is my Section.</Section>
-  //     <Counter setCount={setCount}>Count is {count}</Counter>
-  //     <List<number> items={[2, 1, 1]} render={(item) => <span className="gold">{item}</span>} />
-  //   </>
-  // )
 }
 
 export default App

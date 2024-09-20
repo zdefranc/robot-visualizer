@@ -1,9 +1,10 @@
 mod robot;
 
 use std::sync::Arc;
+use std::f64::consts::PI;
 
 use axum::routing::get;
-use robot::{robot_state::RobotState, RobotLock};
+use robot::{robot_state::{RobotJointState, Robot3DState}, RobotLock};
 use socketioxide::{
     extract::{Data, SocketRef, State},
     SocketIo,
@@ -15,6 +16,10 @@ use tower_http::cors::CorsLayer;
 use tracing::info;
 use tracing_subscriber::FmtSubscriber;
 
+const ELBOW_LENGTH: f64 = 2.0;
+const WRIST_LENGTH: f64 = 1.0;
+const GRIPPER_LENGTH: f64 = 0.5;
+
 async fn on_connect(socket: SocketRef) {
     info!("socket connected: {}", socket.id);
 
@@ -24,7 +29,7 @@ async fn on_connect(socket: SocketRef) {
 
     socket.on(
         "set actuator state",
-        |Data::<RobotState>(data), robot_lock: State<RobotLock>| async move {
+        |Data::<RobotJointState>(data), robot_lock: State<RobotLock>| async move {
             info!("Set state {}", data.elbow_rotation_deg);
             
             {
@@ -37,6 +42,10 @@ async fn on_connect(socket: SocketRef) {
     socket.on_disconnect(|| async move {
         info!("Client disconnected");
     });
+}
+
+fn degrees_to_radians(degrees: f64) -> f64 {
+    degrees * PI / 180.0
 }
 
 #[tokio::main]
@@ -70,16 +79,42 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // let n = robot_sim.state.read().await;
 
-    // Task to send a message every second
+    // Task to send a message at 50 Hz
     tokio::spawn(async move {
         loop {
             let start = Instant::now();
             // Send a status message to the client
+            let state;
             {
                 let robot = c_lock.read().await;
-                let _ = io_handler.read().await.emit("state", robot.state);
+                state = robot.state;
             }
+            
+            let mut coords = Robot3DState::default();
+            coords.z = state.lift_elevation_mm/1000.0;
 
+            let elbow_angle_rad = degrees_to_radians(state.swing_rotation_deg);
+            let wrist_angle_rad = elbow_angle_rad+degrees_to_radians(state.elbow_rotation_deg);
+            let gripper_angle_rad = wrist_angle_rad + degrees_to_radians(state.wrist_rotation_deg);
+
+             // Calculate elbow coordinates
+            coords.x += ELBOW_LENGTH * elbow_angle_rad.cos();
+            coords.y += ELBOW_LENGTH * elbow_angle_rad.sin();
+
+            // Calculate wrist coordinates relative to the elbow
+            coords.x += WRIST_LENGTH * wrist_angle_rad.cos();
+            coords.y += WRIST_LENGTH * wrist_angle_rad.sin();
+
+            // Calculate gripper coordinates relative to the wrist
+            coords.x += GRIPPER_LENGTH * gripper_angle_rad.cos();
+            coords.y += GRIPPER_LENGTH * gripper_angle_rad.sin();
+
+            // This is bad. Fix this.
+            {
+                let socket = io_handler.read().await;
+                let _ = socket.emit("state", state);
+                let _ = socket.emit("coords", coords);
+            }
 
             let loop_duration = Instant::now().duration_since(start);
             if let Some(sleep_duration) = Duration::from_millis(20).checked_sub(loop_duration) {

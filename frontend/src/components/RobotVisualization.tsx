@@ -6,7 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useEffect, useRef } from "react";
 
 const BASE_HEIGHT = 0.3; // Important for IK
-const BASE_RADIUS = 0.8; 
+const BASE_RADIUS = 0.6; 
 
 const LIFT_HEIGHT = 4; 
 const LIFT_RADIUS = 0.3;
@@ -32,6 +32,8 @@ const GRIPPER_STEM_RADIUS = 0.15;
 const GRIPPERS_HEIGHT = 0.05;
 const GRIPPERS_WIDTH = GRIPPER_BASE_DEPTH;
 const GRIPPERS_LENGTH = GRIPPER_BASE_WIDTH+0.2;
+
+const GRIPPER_STATIC_OFFSET = -0.1;
 
 const LIFT_ZERO = -LIFT_HEIGHT/2+GRIPPER_STEM_LENGTH+GRIPPERS_LENGTH-GRIPPER_BASE_WIDTH;
 
@@ -88,7 +90,7 @@ function RobotVisualization(props: RobotVisualizationProps) {
     const material = new THREE.MeshStandardMaterial({ color: 0x0077ff });
 
     // Base
-    const base = new THREE.Mesh(new THREE.CylinderGeometry(BASE_RADIUS, BASE_RADIUS, BASE_HEIGHT, 32), material);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(LIFT_RADIUS, BASE_RADIUS, BASE_HEIGHT, 32), material);
     base.position.set(0, BASE_HEIGHT/2, 0);
     scene.add(base);
     
@@ -145,7 +147,7 @@ function RobotVisualization(props: RobotVisualizationProps) {
     gripperStem.add(gripperBase);
 
     const gripperStatic = new THREE.Mesh(new THREE.BoxGeometry(GRIPPERS_LENGTH, GRIPPERS_HEIGHT, GRIPPERS_WIDTH), material);
-    gripperStatic.position.set((GRIPPERS_LENGTH-GRIPPER_BASE_WIDTH)/2, -0.1, 0);
+    gripperStatic.position.set((GRIPPERS_LENGTH-GRIPPER_BASE_WIDTH)/2, GRIPPER_STATIC_OFFSET, 0);
     // gripperBase.rotation.set(0, 0, 0);
     gripperBase.add(gripperStatic);
 

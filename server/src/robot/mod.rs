@@ -1,6 +1,6 @@
 pub mod robot_state;
 
-use robot_state::RobotState;
+use robot_state::RobotJointState;
 use tokio::sync::RwLock;
 use std::sync::Arc;
 use tokio::time::{sleep, Instant, Duration};
@@ -21,13 +21,13 @@ const MAX_LINEAR_ACCELERATION: f64 = 5.0;
 pub type RobotLock = Arc<RwLock<Robot>>;
 
 pub struct Robot {
-    pub state: RobotState,
-    pub target_state: RobotState,
+    pub state: RobotJointState,
+    pub target_state: RobotJointState,
 }
 
 impl Robot {
     pub fn new() -> Arc<RwLock<Self>> {
-        let robot_lock: RobotLock = Arc::new(RwLock::new(Self { state: RobotState::default(), target_state: RobotState::default() }));
+        let robot_lock: RobotLock = Arc::new(RwLock::new(Self { state: RobotJointState::default(), target_state: RobotJointState::default() }));
         
         Self::controller(robot_lock.clone());
 
@@ -37,6 +37,10 @@ impl Robot {
     fn controller(robot_lock: RobotLock){
         // Task to simulate robot movement
         tokio::spawn(async move {
+            // Implement PD controller for this system.
+
+            // Store previous positions to calculate velocity.
+
             loop {
                 let start = Instant::now();
                 //todo!("Add control logic. With max velocities.");
@@ -70,11 +74,11 @@ impl Robot {
     }
 
     // Rename
-    fn set_state(&mut self, new_state: RobotState) {
+    fn set_state(&mut self, new_state: RobotJointState) {
         self.state = new_state;
     }
 
-    pub fn set_target_state(&mut self, target_state: RobotState){
+    pub fn set_target_state(&mut self, target_state: RobotJointState){
         self.target_state = target_state;
     }
 }

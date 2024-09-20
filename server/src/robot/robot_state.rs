@@ -1,7 +1,7 @@
 use std::ops::{Add, Sub};
 
 #[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Debug, Default)]
-pub struct RobotState {
+pub struct RobotJointState {
     /// Swing rotation (degrees).
     pub swing_rotation_deg: f64,
     /// Lift elevation (mm).
@@ -14,11 +14,11 @@ pub struct RobotState {
     pub gripper_open_mm: f64,
 }
 
-impl Add for RobotState{
-    type Output = RobotState;
+impl Add for RobotJointState{
+    type Output = RobotJointState;
 
-    fn add(self, rhs: RobotState) -> RobotState {
-        RobotState {
+    fn add(self, rhs: RobotJointState) -> RobotJointState {
+        RobotJointState {
             swing_rotation_deg: self.swing_rotation_deg + rhs.swing_rotation_deg,
             lift_elevation_mm: self.lift_elevation_mm + rhs.lift_elevation_mm,
             elbow_rotation_deg: self.elbow_rotation_deg + rhs.elbow_rotation_deg,
@@ -28,11 +28,11 @@ impl Add for RobotState{
     }
 }
 
-impl Sub for RobotState{
-    type Output = RobotState;
+impl Sub for RobotJointState{
+    type Output = RobotJointState;
 
-    fn sub(self, rhs: RobotState) -> RobotState {
-        RobotState {
+    fn sub(self, rhs: RobotJointState) -> RobotJointState {
+        RobotJointState {
             swing_rotation_deg: self.swing_rotation_deg - rhs.swing_rotation_deg,
             lift_elevation_mm: self.lift_elevation_mm - rhs.lift_elevation_mm,
             elbow_rotation_deg: self.elbow_rotation_deg - rhs.elbow_rotation_deg,
@@ -40,4 +40,11 @@ impl Sub for RobotState{
             gripper_open_mm: self.gripper_open_mm - rhs.gripper_open_mm,
         }
     }
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Debug, Default)]
+pub struct Robot3DState {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }

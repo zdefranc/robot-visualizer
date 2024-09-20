@@ -11,17 +11,21 @@ export const RobotStateDisplay = (props: RobotStateDisplayProps) => {
     <div>
       <h2>Current Robot State</h2>
       {(props.robotState && props.coords) ? (
-        <ul>
-          <li>Swing Rotation (degrees): {props.robotState.swing_rotation_deg}</li>
-          <li>Lift Elevation (mm): {props.robotState.lift_elevation_mm}</li>
-          <li>Elbow Rotation (degrees): {props.robotState.elbow_rotation_deg}</li>
-          <li>Wrist Rotation (degrees): {props.robotState.wrist_rotation_deg}</li>
-          <li>Gripper Opening (mm): {props.robotState.gripper_open_mm}</li>
-          <li> </li>
-          <li>X (m): {props.coords.x}</li>
-          <li>Y (m): {props.coords.y}</li>
-          <li>Z (m): {props.coords.z}</li>
-        </ul>
+        <div>
+          <ul>
+            <li>Swing Rotation (degrees): {props.robotState.swing_rotation_deg.toFixed(3)}</li>
+            <li>Lift Elevation (mm): {props.robotState.lift_elevation_mm.toFixed(3)}</li>
+            <li>Elbow Rotation (degrees): {props.robotState.elbow_rotation_deg.toFixed(3)}</li>
+            <li>Wrist Rotation (degrees): {props.robotState.wrist_rotation_deg.toFixed(3)}</li>
+            <li>Gripper Opening (mm): {props.robotState.gripper_open_mm.toFixed(3)}</li>
+          </ul>
+        
+          <ul>
+            <li>X (m): {props.coords.x}</li>
+            <li>Y (m): {props.coords.y}</li>
+            <li>Z (m): {props.coords.z}</li>
+          </ul>
+        </div>
       ) : (
         <p>No connection with server...</p>
       )}

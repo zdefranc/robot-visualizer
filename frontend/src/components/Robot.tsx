@@ -7,6 +7,8 @@ import RobotVisualization from './RobotVisualization';
 
 import { Coord3D, RobotState } from '../types/RobotTypes';
 
+import styles from '../css/Robot.module.css'
+
 export const Robot = () => {
   // State to store the robot's joint state received from the server
   const [robotState, setRobotState] = useState<RobotState | null>(null);
@@ -33,13 +35,13 @@ export const Robot = () => {
   }, []);
 
   return (
-    <div>
-        <div>
-            <RobotStateDisplay robotState={robotState} coords={coords}/>
-            <RobotStateCommand />
-        </div>
+    <div className={styles['robot-div']}>
         <div>
             <RobotVisualization robotState={robotState} />
+        </div>
+        <div className={styles['command-div']}>
+            <RobotStateDisplay robotState={robotState} coords={coords}/>
+            <RobotStateCommand />
         </div>
     </div>
   );

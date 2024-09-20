@@ -4,7 +4,7 @@ use std::sync::Arc;
 use std::f64::consts::PI;
 
 use axum::routing::get;
-use robot::{robot_state::{RobotJointState, Robot3DState}, RobotLock};
+use robot::{robot_state::{RobotJointState, Coord3D}, RobotLock};
 use socketioxide::{
     extract::{Data, SocketRef, State},
     SocketIo,
@@ -16,10 +16,6 @@ use tower_http::cors::CorsLayer;
 use tracing::info;
 use tracing_subscriber::FmtSubscriber;
 
-const ELBOW_LENGTH: f64 = 2.0;
-const WRIST_LENGTH: f64 = 1.0;
-const GRIPPER_LENGTH: f64 = 0.5;
-
 async fn on_connect(socket: SocketRef) {
     info!("socket connected: {}", socket.id);
 
@@ -30,10 +26,19 @@ async fn on_connect(socket: SocketRef) {
     socket.on(
         "set actuator state",
         |Data::<RobotJointState>(data), robot_lock: State<RobotLock>| async move {
-            info!("Set state {}", data.elbow_rotation_deg);
             
             {
                 robot_lock.write().await.set_target_state(data);
+            }
+        },
+    );
+
+    socket.on(
+        "set coord state",
+        |Data::<Coord3D>(data), robot_lock: State<RobotLock>| async move {
+            
+            {
+                robot_lock.write().await.set_coord_state(data);
             }
         },
     );
@@ -85,29 +90,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let start = Instant::now();
             // Send a status message to the client
             let state;
+            let coords;
             {
                 let robot = c_lock.read().await;
-                state = robot.state;
+                state = robot.get_state();
+                coords = robot.get_coord_state();
             }
-            
-            let mut coords = Robot3DState::default();
-            coords.z = state.lift_elevation_mm/1000.0;
-
-            let elbow_angle_rad = degrees_to_radians(state.swing_rotation_deg);
-            let wrist_angle_rad = elbow_angle_rad+degrees_to_radians(state.elbow_rotation_deg);
-            let gripper_angle_rad = wrist_angle_rad + degrees_to_radians(state.wrist_rotation_deg);
-
-             // Calculate elbow coordinates
-            coords.x += ELBOW_LENGTH * elbow_angle_rad.cos();
-            coords.y += ELBOW_LENGTH * elbow_angle_rad.sin();
-
-            // Calculate wrist coordinates relative to the elbow
-            coords.x += WRIST_LENGTH * wrist_angle_rad.cos();
-            coords.y += WRIST_LENGTH * wrist_angle_rad.sin();
-
-            // Calculate gripper coordinates relative to the wrist
-            coords.x += GRIPPER_LENGTH * gripper_angle_rad.cos();
-            coords.y += GRIPPER_LENGTH * gripper_angle_rad.sin();
 
             // This is bad. Fix this.
             {

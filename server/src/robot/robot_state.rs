@@ -1,4 +1,20 @@
-use std::ops::{Add, Sub};
+use std::ops::{Add, Div, Mul, Sub};
+
+fn clamp_angle(angle: f64) -> f64{
+    return ((angle - 180.0 ).rem_euclid(360.0)).abs() -180.0 ;
+}
+
+// Bad name!
+fn clamp_angle_diff(angle: f64) -> f64 {
+    return match (angle) {
+        angle if angle.abs() > 180.0 => {
+            -(360.0 - angle.abs())*angle.signum()
+        } 
+        _ => {
+            angle
+        }
+    }
+}
 
 #[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Debug, Default)]
 pub struct RobotJointState {
@@ -12,6 +28,49 @@ pub struct RobotJointState {
     pub wrist_rotation_deg: f64,
     /// Gripper opening (mm).
     pub gripper_open_mm: f64,
+}
+
+impl RobotJointState {
+    pub fn clamp_angles(&mut self) {
+        self.swing_rotation_deg = clamp_angle(self.swing_rotation_deg);
+        self.elbow_rotation_deg = clamp_angle(self.elbow_rotation_deg);
+        self.wrist_rotation_deg = clamp_angle(self.wrist_rotation_deg);
+    }
+
+    pub fn val_mul(&mut self, val: f64) -> RobotJointState{
+        let mut output = RobotJointState::default();
+        
+        output.swing_rotation_deg = self.swing_rotation_deg * val;
+        output.lift_elevation_mm = self.lift_elevation_mm * val;
+        output.elbow_rotation_deg = self.elbow_rotation_deg * val;
+        output.wrist_rotation_deg = self.wrist_rotation_deg * val;
+        output.gripper_open_mm = self.gripper_open_mm * val;
+
+        return output
+    }
+
+    pub fn val_div(&mut self, val: f64) -> RobotJointState{
+        let mut output = RobotJointState::default();
+        
+        output.swing_rotation_deg = self.swing_rotation_deg / val;
+        output.lift_elevation_mm = self.lift_elevation_mm / val;
+        output.elbow_rotation_deg = self.elbow_rotation_deg / val;
+        output.wrist_rotation_deg = self.wrist_rotation_deg / val;
+        output.gripper_open_mm = self.gripper_open_mm / val;
+
+        return output
+    }
+
+    pub fn clamped_sub(lhs: RobotJointState, rhs: RobotJointState) -> RobotJointState{
+        
+        let mut output = lhs - rhs;
+
+        output.swing_rotation_deg = clamp_angle_diff(output.swing_rotation_deg);
+        output.elbow_rotation_deg = clamp_angle_diff(output.elbow_rotation_deg);
+        output.wrist_rotation_deg = clamp_angle_diff(output.wrist_rotation_deg);
+
+        return output
+    }
 }
 
 impl Add for RobotJointState{
@@ -42,8 +101,22 @@ impl Sub for RobotJointState{
     }
 }
 
+impl Mul for RobotJointState {
+    type Output = RobotJointState;
+
+    fn mul(self, rhs: RobotJointState) -> RobotJointState {
+        RobotJointState {
+            swing_rotation_deg: self.swing_rotation_deg * rhs.swing_rotation_deg,
+            lift_elevation_mm: self.lift_elevation_mm * rhs.lift_elevation_mm,
+            elbow_rotation_deg: self.elbow_rotation_deg * rhs.elbow_rotation_deg,
+            wrist_rotation_deg: self.wrist_rotation_deg * rhs.wrist_rotation_deg,
+            gripper_open_mm: self.gripper_open_mm * rhs.gripper_open_mm,
+        }
+    }
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Debug, Default)]
-pub struct Robot3DState {
+pub struct Coord3D {
     pub x: f64,
     pub y: f64,
     pub z: f64,

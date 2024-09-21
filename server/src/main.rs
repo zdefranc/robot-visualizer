@@ -1,7 +1,6 @@
 mod robot;
 
 use std::sync::Arc;
-use std::f64::consts::PI;
 
 use axum::routing::get;
 use robot::{robot_state::{RobotJointState, Coord3D}, RobotLock};
@@ -47,10 +46,6 @@ async fn on_connect(socket: SocketRef) {
     socket.on_disconnect(|| async move {
         info!("Client disconnected");
     });
-}
-
-fn degrees_to_radians(degrees: f64) -> f64 {
-    degrees * PI / 180.0
 }
 
 #[tokio::main]

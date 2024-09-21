@@ -1,8 +1,10 @@
 pub mod robot_state;
+pub mod constants;
 
 use robot_state::{Coord3D, RobotJointState};
+use constants::*;
 use tokio::sync::RwLock;
-use std::{default, f64::consts::PI, sync::Arc};
+use std::{f64::consts::PI, sync::Arc};
 use tokio::time::{sleep, Instant, Duration};
 
 const CONTROLLER_LOOP_TIME_MS: u64 = 20;
@@ -11,22 +13,18 @@ const CONTROLLER_LOOP_TIME_S: f64 = CONTROLLER_LOOP_TIME_MS as f64/1000.0;
 /// Max Angular velcoity (deg/sec)
 const MAX_ANGULAR_VELOCITY: f64 = 18.0;
 /// Max linear velocity (mm/sec)
-const MAX_LINEAR_VELOCITY: f64 = 15.0;
+const MAX_LINEAR_VELOCITY: f64 = 80.0;
 
 /// Max Angular acceleration (deg/sec^2)
 const MAX_ANGULAR_ACCELERATION: f64 = 5.0;
 /// Max linear acceleration (mm/sec^2)
-const MAX_LINEAR_ACCELERATION: f64 = 15.0;
+const MAX_LINEAR_ACCELERATION: f64 = 40.0;
 
 const ANGLE_P: f64 = 0.224;
-const LINEAR_P: f64 = 1.0;
+const LINEAR_P: f64 = 1.35;
 
 const ANGLE_D: f64 = 0.9;
 const LINEAR_D: f64 = 3.3;
-
-const ELBOW_LENGTH: f64 = 2.0;
-const WRIST_LENGTH: f64 = 1.0;
-const GRIPPER_LENGTH: f64 = 0.5;
 
 
 pub type RobotLock = Arc<RwLock<Robot>>;
@@ -68,7 +66,6 @@ impl Robot {
 
             // Store previous positions to calculate velocity.
 
-            let mut prev_state: Option<RobotJointState> = None;
             let mut state_velocity: RobotJointState = RobotJointState::default();
             
             let mut count = 0;
@@ -98,7 +95,7 @@ impl Robot {
                 state_acceleration.wrist_rotation_deg = state_error.wrist_rotation_deg*ANGLE_P;
                 state_acceleration.gripper_open_mm = state_error.gripper_open_mm*LINEAR_P;
 
-                if (count % 50 == 0){
+                if count % 50 == 0{
                     println!("Vel {:?}", state_velocity);
                     println!("A {:?}", state_acceleration);
                 }
@@ -113,7 +110,7 @@ impl Robot {
                 state_acceleration.wrist_rotation_deg += -state_velocity.wrist_rotation_deg*ANGLE_D;
                 state_acceleration.gripper_open_mm += -state_velocity.gripper_open_mm*LINEAR_D;
                 
-                if (count % 50 == 0){
+                if count % 50 == 0 {
                     println!("V2 {:?}", state_velocity);
                     println!("A2 {:?}", state_acceleration);
                 }
@@ -143,10 +140,6 @@ impl Robot {
                     robot.set_state(state+state_velocity.val_mul(CONTROLLER_LOOP_TIME_S));
                 }
 
-                prev_state = Some(state);
-
-                // Maybe use a min acceleration value
-
 
                 let loop_duration = Instant::now().duration_since(start);
                 if let Some(sleep_duration) = Duration::from_millis(CONTROLLER_LOOP_TIME_MS).checked_sub(loop_duration) {
@@ -159,7 +152,8 @@ impl Robot {
 
     // Rename
     fn set_state(&mut self, mut new_state: RobotJointState) {
-        new_state.clamp_angles();
+        new_state.check_limits();
+        
         self.state = new_state;
     }
 
@@ -168,7 +162,7 @@ impl Robot {
     }
 
     pub fn set_target_state(&mut self, mut target_state: RobotJointState) {
-        target_state.clamp_angles();
+        target_state.check_limits();
         self.target_state = target_state;
     }
 
@@ -177,14 +171,14 @@ impl Robot {
 
         target_state.lift_elevation_mm = coord_state.z*1000.0;
 
-        let end_circ = Circle::new(coord_state.x, coord_state.y, GRIPPER_LENGTH);
+        let end_circ = Circle::new(coord_state.x, coord_state.y, GRIPPER_LENGTH_M);
 
         let origin_circ_r = match (coord_state.x.powf(2.0) + coord_state.y.powf(2.0)).sqrt() {
-            val if (val > (ELBOW_LENGTH + WRIST_LENGTH)) => ELBOW_LENGTH + WRIST_LENGTH,
+            val if (val > (ELBOW_LENGTH_M + WRIST_LENGTH_M)) => ELBOW_LENGTH_M + WRIST_LENGTH_M,
 
-            val if (val <= (ELBOW_LENGTH + WRIST_LENGTH)) => val,  
+            val if (val <= (ELBOW_LENGTH_M + WRIST_LENGTH_M)) => val,  
 
-            _ => ELBOW_LENGTH + WRIST_LENGTH,
+            _ => ELBOW_LENGTH_M + WRIST_LENGTH_M,
         };
         
         let origin_circ = Circle::new(0.0, 0.0, origin_circ_r);
@@ -227,16 +221,16 @@ impl Robot {
         let gripper_angle_rad = wrist_angle_rad + degrees_to_radians(state.wrist_rotation_deg);
 
             // Calculate elbow coordinates
-        coords.x += ELBOW_LENGTH * elbow_angle_rad.cos();
-        coords.y += ELBOW_LENGTH * elbow_angle_rad.sin();
+        coords.x += ELBOW_LENGTH_M * elbow_angle_rad.cos();
+        coords.y += ELBOW_LENGTH_M * elbow_angle_rad.sin();
 
         // Calculate wrist coordinates relative to the elbow
-        coords.x += WRIST_LENGTH * wrist_angle_rad.cos();
-        coords.y += WRIST_LENGTH * wrist_angle_rad.sin();
+        coords.x += WRIST_LENGTH_M * wrist_angle_rad.cos();
+        coords.y += WRIST_LENGTH_M * wrist_angle_rad.sin();
 
         // Calculate gripper coordinates relative to the wrist
-        coords.x += GRIPPER_LENGTH * gripper_angle_rad.cos();
-        coords.y += GRIPPER_LENGTH * gripper_angle_rad.sin();
+        coords.x += GRIPPER_LENGTH_M * gripper_angle_rad.cos();
+        coords.y += GRIPPER_LENGTH_M * gripper_angle_rad.sin();
 
         return coords;
     }

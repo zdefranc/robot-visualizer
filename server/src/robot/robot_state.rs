@@ -1,6 +1,7 @@
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, Mul, Sub};
+use super::constants::*;
 
-fn clamp_angle(angle: f64) -> f64{
+fn limit_angle(angle: f64) -> f64{
     return ((angle - 180.0 ).rem_euclid(360.0)).abs() -180.0 ;
 }
 
@@ -31,10 +32,23 @@ pub struct RobotJointState {
 }
 
 impl RobotJointState {
-    pub fn clamp_angles(&mut self) {
-        self.swing_rotation_deg = clamp_angle(self.swing_rotation_deg);
-        self.elbow_rotation_deg = clamp_angle(self.elbow_rotation_deg);
-        self.wrist_rotation_deg = clamp_angle(self.wrist_rotation_deg);
+    pub fn check_limits(&mut self) {
+        self.swing_rotation_deg = limit_angle(self.swing_rotation_deg);
+        self.elbow_rotation_deg = limit_angle(self.elbow_rotation_deg);
+        self.wrist_rotation_deg = limit_angle(self.wrist_rotation_deg);
+
+        self.lift_elevation_mm = match self.lift_elevation_mm {
+            val if LIFT_HEIGHT_MM < val => LIFT_HEIGHT_MM,
+            val if 0.0 > val => 0.0,
+            _ => self.lift_elevation_mm
+        };
+
+        self.gripper_open_mm = match self.gripper_open_mm {
+            val if GRIPPER_WIDTH_MM < val => GRIPPER_WIDTH_MM,
+            val if 0.0 > val => 0.0,
+            _ => self.gripper_open_mm
+        };
+
     }
 
     pub fn val_mul(&mut self, val: f64) -> RobotJointState{

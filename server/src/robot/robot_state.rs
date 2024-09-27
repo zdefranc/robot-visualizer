@@ -6,7 +6,7 @@ fn limit_angle(angle: f64) -> f64{
 }
 
 // Bad name!
-fn clamp_angle_diff(angle: f64) -> f64 {
+pub fn clamp_angle_diff(angle: f64) -> f64 {
     return match (angle) {
         angle if angle.abs() > 180.0 => {
             -(360.0 - angle.abs())*angle.signum()
@@ -130,8 +130,15 @@ impl Mul for RobotJointState {
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Debug, Default)]
-pub struct Coord3D {
+pub struct Coord4DOF {
     pub x: f64,
     pub y: f64,
     pub z: f64,
+    pub theta: f64,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Coord2D {
+    pub x: f64,
+    pub y: f64,
 }

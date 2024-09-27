@@ -3,7 +3,7 @@ mod robot;
 use std::sync::Arc;
 
 use axum::routing::get;
-use robot::{robot_state::{RobotJointState, Coord3D}, RobotLock};
+use robot::{robot_state::{RobotJointState, Coord4DOF}, RobotLock};
 use socketioxide::{
     extract::{Data, SocketRef, State},
     SocketIo,
@@ -34,7 +34,7 @@ async fn on_connect(socket: SocketRef) {
 
     socket.on(
         "set coord state",
-        |Data::<Coord3D>(data), robot_lock: State<RobotLock>| async move {
+        |Data::<Coord4DOF>(data), robot_lock: State<RobotLock>| async move {
             
             {
                 robot_lock.write().await.set_coord_state(data);

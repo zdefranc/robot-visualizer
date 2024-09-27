@@ -41,10 +41,6 @@ impl Circle {
     }
 }
 
-pub struct Robot {
-    state: RobotJointState,
-    target_state: RobotJointState,
-}
 
 fn degrees_to_radians(degrees: f64) -> f64 {
     degrees * PI / 180.0
@@ -53,10 +49,15 @@ fn degrees_to_radians(degrees: f64) -> f64 {
 fn radians_to_degrees(degrees: f64) -> f64 {
     degrees * 180.0 / PI
 }
+pub struct Robot {
+    joint_state: RobotJointState,
+    target_joint_state: RobotJointState,
+    target_coord_state: Option<Coord4DOF>,
+}
 
 impl Robot {
     pub fn new() -> Arc<RwLock<Self>> {
-        let robot_lock: RobotLock = Arc::new(RwLock::new(Self { state: RobotJointState::default(), target_state: RobotJointState::default() }));
+        let robot_lock: RobotLock = Arc::new(RwLock::new(Self { joint_state: RobotJointState::default(), target_joint_state: RobotJointState::default(), target_coord_state: None }));
         
         Self::controller(robot_lock.clone());
 
@@ -72,19 +73,25 @@ impl Robot {
 
             let mut state_velocity: RobotJointState = RobotJointState::default();
             
-            let mut count = 0;
+            // let mut count = 0;
             loop {
-                count += 1;
+                // count += 1;
 
                 let start = Instant::now();
                 //todo!("Add control logic. With max velocities.");
+
+
+                let target_coord_state = robot_lock.read().await.target_coord_state;
+                if let Some(coord_state) = target_coord_state {
+                    robot_lock.write().await.set_coord_state(coord_state);
+                }
 
                 let state;
                 let target;
                 {
                     let robot = robot_lock.read().await;
-                    state = robot.state;
-                    target = robot.target_state;
+                    state = robot.joint_state;
+                    target = robot.target_joint_state;
                 }
 
                 // Get the error
@@ -158,20 +165,22 @@ impl Robot {
     fn set_state(&mut self, mut new_state: RobotJointState) {
         new_state.check_limits();
         
-        self.state = new_state;
+        self.joint_state = new_state;
     }
 
     pub fn get_state(&self) -> RobotJointState{
-        return self.state;
+        return self.joint_state;
     }
 
-    pub fn set_target_state(&mut self, mut target_state: RobotJointState) {
+    pub fn set_joint_target_state(&mut self, mut target_state: RobotJointState) {
         target_state.check_limits();
-        self.target_state = target_state;
+        self.target_joint_state = target_state;
+
+        // Is joint state is set refresh target state (I do not like this, it should only be wehn called externally)
+        self.target_coord_state = None;
     }
 
     fn ik(&self, coord_state: Coord4DOF) -> Option<RobotJointState> {
-        println!("{:?}", coord_state);
 
         let mut target_state: RobotJointState = RobotJointState::default();
 
@@ -213,12 +222,13 @@ impl Robot {
 
     pub fn set_coord_state(&mut self, coord_state: Coord4DOF) {
         if let Some(state) = self.ik(coord_state) {
-            self.set_target_state(state);
+            self.set_joint_target_state(state);
+            self.target_coord_state = Some(coord_state);
         }
     }
 
     pub fn get_coord_state(&self) -> Coord4DOF {
-        let state = self.state;
+        let state = self.joint_state;
         
         let mut coords = Coord4DOF::default();
         coords.z = state.lift_elevation_mm/1000.0;

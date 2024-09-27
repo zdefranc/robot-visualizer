@@ -27,7 +27,7 @@ async fn on_connect(socket: SocketRef) {
         |Data::<RobotJointState>(data), robot_lock: State<RobotLock>| async move {
             
             {
-                robot_lock.write().await.set_target_state(data);
+                robot_lock.write().await.set_joint_target_state(data);
             }
         },
     );

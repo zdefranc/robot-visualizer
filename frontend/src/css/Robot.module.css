@@ -1,0 +1,14 @@
+
+.robot-div {
+    display: flex; /* Enables flexbox layout */
+    justify-content: space-between; /* Distributes components evenly */
+    align-items: center; /* Vertically aligns items in the center */
+    gap: 20px; /* Space between components */
+}
+
+
+.command-div {
+    flex: 1; /* Take up equal space; adjust as needed */
+    border: 1px solid #ddd;
+    padding: 10px;
+}

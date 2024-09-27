@@ -5,14 +5,14 @@ import { RobotStateDisplay } from './RobotStateDisplay';
 import { RobotStateCommand } from './RobotStateCommand';
 import RobotVisualization from './RobotVisualization';
 
-import { Coord3D, RobotState } from '../types/RobotTypes';
+import { Coord4DOF, RobotState } from '../types/RobotTypes';
 
 import styles from '../css/Robot.module.css'
 
 export const Robot = () => {
   // State to store the robot's joint state received from the server
   const [robotState, setRobotState] = useState<RobotState | null>(null);
-  const [coords, setCoords] = useState<Coord3D | null>(null);
+  const [coords, setCoords] = useState<Coord4DOF | null>(null);
 
   useEffect(() => {
     // Listen for the "state" message from the server
@@ -20,7 +20,7 @@ export const Robot = () => {
       setRobotState(data);  // Update the state with the received data
     });
 
-    socket.on('coords', (data: Coord3D) => {
+    socket.on('coords', (data: Coord4DOF) => {
         setCoords(data);  // Update the state with the received data
     });
 

@@ -1,0 +1,43 @@
+.command-conatiner {
+    height:75vh;
+}
+.state-label {
+    font-size: 0.7em; /* This ensures the input font size adjusts with the overall font-size */
+    display: flex;
+    width: 80%;
+    margin-bottom: -5%;
+    position: relative;
+}
+  
+.state-input {
+    margin-top: 1px;
+    margin-bottom: 1px;
+    padding: 5px;
+    width: 100px; /* Makes input fields uniform in width */
+    box-sizing: border-box; /* Ensures padding and border are included in the element’s width and height */
+    position: absolute; /* Absolute positioning to control position inside the container */
+    right: 1px; /* Ensures the element is 5px from the right side */
+}
+
+
+.title {
+    font-size: 0.8em; /* Decrease text size slightly */
+}
+
+.button {
+    font-size: 0.7em; 
+}
+
+.break {
+    height: 4px;
+}
+
+.send-button {
+    display: block;
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1em;
+}

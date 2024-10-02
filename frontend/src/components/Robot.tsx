@@ -35,8 +35,8 @@ export const Robot = () => {
   }, []);
 
   return (
-    <div className={styles['robot-div']}>
-        <div>
+    <div className={styles['robot-container']}>
+        <div className={styles['robot-div']}>
             <RobotVisualization robotState={robotState} />
         </div>
         <div className={styles['command-div']}>

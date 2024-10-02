@@ -2,7 +2,8 @@ import React from 'react';
 import socket from '../utils/socket';
 import { useState } from 'react';
  
-import { Coord2D, Coord4DOF as Coord4DOF, JointState } from '../types/RobotTypes';
+import { Coord4DOF as Coord4DOF, JointState } from '../types/RobotTypes';
+import styles from '../css/RobotStateCommand.module.css'
 
 // Initial state values
 const initialAccuatorState: JointState = {
@@ -112,13 +113,14 @@ export const RobotStateCommand = () => {
   };
 
   return (
-    <div>
+    <div className={styles['command-conatiner']}>
       <div>
-        <h2>Control Robot Actuators</h2>
+        <h2 className={styles['title']}>Control Robot Actuators</h2>
         <form>
-          <label>
-            Swing Rotation (degrees):
-            <input
+          <label className={styles['state-label']}>
+            <text>Swing Rotation (degrees):</text>
+            <input 
+              className={styles['state-input']}
               type="number"
               step="any"
               name="swing_rotation_deg"
@@ -126,10 +128,11 @@ export const RobotStateCommand = () => {
               onChange={handleAccuatorChange}
             />
           </label>
-          <br />
-          <label>
-            Lift Elevation (mm):
+          <br className={styles['break']}/>
+          <label className={styles['state-label']}>
+          <text>Lift Elevation (mm):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="lift_elevation_mm"
@@ -137,10 +140,11 @@ export const RobotStateCommand = () => {
               onChange={handleAccuatorChange}
             />
           </label>
-          <br />
-          <label>
-            Elbow Rotation (degrees):
+          <br className={styles['break']}/>
+          <label className={styles['state-label']}>
+            <text>Elbow Rotation (degrees):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="elbow_rotation_deg"
@@ -148,10 +152,11 @@ export const RobotStateCommand = () => {
               onChange={handleAccuatorChange}
             />
           </label>
-          <br />
-          <label>
-            Wrist Rotation (degrees):
+          <br className={styles['break']}/>
+          <label className={styles['state-label']}>
+            <text>Wrist Rotation (degrees):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="wrist_rotation_deg"
@@ -159,10 +164,11 @@ export const RobotStateCommand = () => {
               onChange={handleAccuatorChange}
             />
           </label>
-          <br />
-          <label>
-            Gripper Opening (mm):
+          <br className={styles['break']}/>
+          <label className={styles['state-label']}>
+            <text>Gripper Opening (mm):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="gripper_open_mm"
@@ -170,19 +176,20 @@ export const RobotStateCommand = () => {
               onChange={handleAccuatorChange}
             />
           </label>
-          <br />
-          <button type="button" onClick={sendActuatorState}>
+          <br className={styles['break']}/>
+          <button className={styles['button']} type="button" onClick={sendActuatorState}>
             Send Actuator State
           </button>
         </form>
       </div>
 
       <div>
-        <h2>Control Robot Coords</h2>
+        <h2 className={styles['title']}>Control Robot End Effector</h2>
         <form>
-          <label>
-            X (m):
+          <label className={styles['state-label']}>
+            <text>X (m):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="x"
@@ -190,10 +197,11 @@ export const RobotStateCommand = () => {
               onChange={handleCoord4DOFChange}
             />
           </label>
-          <br />
-          <label>
-            Y (m):
+          <br className={styles['break']}/>
+          <label className={styles['state-label']}>
+            <text>Y (m):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="y"
@@ -201,10 +209,11 @@ export const RobotStateCommand = () => {
               onChange={handleCoord4DOFChange}
             />
           </label>
-          <br />
-          <label>
-            Z (m):
+          <br className={styles['break']}/>
+          <label className={styles['state-label']}>
+            <text>Z (m):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="z"
@@ -212,9 +221,11 @@ export const RobotStateCommand = () => {
               onChange={handleCoord4DOFChange}
             />
           </label>
-          <label>
-            Theta (deg):
+          <br className={styles['break']}/>
+          <label className={styles['state-label']}>
+            <text>Theta (deg):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="theta"
@@ -222,20 +233,21 @@ export const RobotStateCommand = () => {
               onChange={handleCoord4DOFChange}
             />
           </label>
-          
-          <button type="button" onClick={sendCoordState}>
+          <br className={styles['break']}/>
+          <button className={styles['button']} type="button" onClick={sendCoordState}>
             Send Coord State
           </button>
           
         </form>
       </div>
-
+      
       <div>
-        <h2>Control Robot Coords</h2>
+        <h2 className={styles['title']}>Control Robot Base</h2>
         <form>
-          <label>
-            X (m):
+          <label className={styles['state-label']}>
+            <text>X (m):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="x"
@@ -243,10 +255,11 @@ export const RobotStateCommand = () => {
               onChange={handleBaseCoordChange}
             />
           </label>
-          <br />
-          <label>
-            Y (m):
+          <br className={styles['break']}/>
+          <label className={styles['state-label']}>
+            <text>Y (m):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="y"
@@ -254,9 +267,11 @@ export const RobotStateCommand = () => {
               onChange={handleBaseCoordChange}
             />
           </label>
-          <label>
-            Z (m):
+          <br className={styles['break']}/>
+          <label className={styles['state-label']}>
+            <text>Z (m):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="z"
@@ -264,9 +279,11 @@ export const RobotStateCommand = () => {
               onChange={handleBaseCoordChange}
             />
           </label>
-          <label>
-            Theta (deg):
+          <br className={styles['break']}/>
+          <label className={styles['state-label']}>
+            <text>Theta (deg):</text>
             <input
+              className={styles['state-input']}
               type="number"
               step="any"
               name="theta"
@@ -274,8 +291,8 @@ export const RobotStateCommand = () => {
               onChange={handleBaseCoordChange}
             />
           </label>
-          
-          <button type="button" onClick={sendBaseCoordState}>
+          <br className={styles['break']}/>
+          <button className={styles['button']} type="button" onClick={sendBaseCoordState}>
             Send Coord State
           </button>
           

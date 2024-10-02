@@ -1,0 +1,47 @@
+.state-parent-div {
+    height: 155px;
+}
+.state-div {
+    font-size: 0.6em; /* Decrease text size slightly */
+    display: flex; /* Place the lists horizontally */
+    font-family: 'Arial', sans-serif;
+}
+
+.title {
+    font-size: 0.8em; 
+}
+
+
+.joint-list {
+    list-style: none; /* Remove default bullet points */
+    padding: 0;
+    margin: 0 5px; /* Space between the lists */
+    width: 46%; /* Make each <li> uniform in width */
+    float: left; /* Place each ul horizontally */
+}
+  
+.state-list {
+    list-style: none; /* Remove default bullet points */
+    padding: 0;
+    margin: 0 5px; /* Space between the lists */
+    width: 27%; /* Make each <li> uniform in width */
+    float: left; /* Place each ul horizontally */
+}
+
+.state-header {
+    font-size: 1.1em; /* Decrease text size slightly */
+    padding: 0rem;
+}
+
+.state-item {
+    padding: 1px 0; /* Add some padding for better readability */
+}
+
+.h2 {
+    clear: both; /* Ensure the header stays above the <ul> elements */
+}
+
+.p {
+    clear: both; /* Ensure the message stays below the <ul> elements */
+}
+  

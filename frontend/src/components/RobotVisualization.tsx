@@ -88,17 +88,6 @@ function RobotVisualization(props: RobotVisualizationProps) {
     // Create the robot arm parts (cylinders to represent each segment)
     const material = new THREE.MeshStandardMaterial({ color: 0x0077ff });
 
-    // Create the robot arm parts (cylinders to represent each segment)
-    const sMaterial = new THREE.MeshStandardMaterial({ color: 0xff1100 });
-    // Create the geometry of the sphere
-    const geometry = new THREE.SphereGeometry(0.05, 32, 32); // radius, widthSegments, heightSegments
-    // Create the mesh by combining geometry and material
-    const sphere = new THREE.Mesh(geometry, sMaterial);
-    // Set the position of the sphere
-    sphere.position.set(2, 1, -1);
-    // Add the sphere to the scene
-    scene.add(sphere);
-
     // Base
     const base = new THREE.Mesh(new THREE.CylinderGeometry(LIFT_RADIUS, BASE_RADIUS, BASE_HEIGHT, 32), material);
     base.position.set(0, BASE_HEIGHT/2, 0);
@@ -180,8 +169,8 @@ function RobotVisualization(props: RobotVisualizationProps) {
         wristJoint.rotation.x = THREE.MathUtils.degToRad(state.joint_state.wrist_rotation_deg);
         gripperDynamic.position.y = (state.joint_state.gripper_open_mm/1000+GRIPPERS_HEIGHT);
 
-        base.position.set(state.base_state.x, state.base_state.z, - state.base_state.y)
-        base.rotation.y = state.base_state.theta;
+        base.position.set(state.base_state.x, state.base_state.z + BASE_HEIGHT/2, - state.base_state.y)
+        base.rotation.y = THREE.MathUtils.degToRad(state.base_state.theta);
       }
 
       renderer.render(scene, camera);

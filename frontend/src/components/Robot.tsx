@@ -5,7 +5,7 @@ import { RobotStateDisplay } from './RobotStateDisplay';
 import { RobotStateCommand } from './RobotStateCommand';
 import RobotVisualization from './RobotVisualization';
 
-import { Coord4DOF, RobotState } from '../types/RobotTypes';
+import { Coord4DOF, JointState, RobotState } from '../types/RobotTypes';
 
 import styles from '../css/Robot.module.css'
 

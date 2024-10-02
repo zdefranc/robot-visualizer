@@ -1,45 +1,41 @@
 pub mod robot_state;
 pub mod constants;
 
-use robot_state::{Coord4DOF, clamp_angle_diff, Coord2D, RobotJointState};
+use robot_state::{limit_angle, shortest_angle_diff, Coord2D, Coord4DOF, JointState, RobotState};
 use constants::*;
 use tokio::sync::RwLock;
 use std::{f64::consts::PI, sync::Arc};
 use tokio::time::{sleep, Instant, Duration};
 
-const CONTROLLER_LOOP_TIME_MS: u64 = 20;
+const CONTROLLER_LOOP_TIME_MS: u64 = 5;
 const CONTROLLER_LOOP_TIME_S: f64 = CONTROLLER_LOOP_TIME_MS as f64/1000.0;
+
+/// 
+const MAX_BASE_LINEAR_VEL: f64 = 0.06;
+const BASE_LINEAR_P: f64 = 1.0;
+const BASE_LINEAR_D: f64 = 0.5;
+
+const MAX_BASE_ANGLE_VEL: f64 = 3.0;
+const BASE_ANGLE_P: f64 = 0.5;
+const BASE_ANGLE_D: f64 = 0.1;
 
 /// Max Angular velcoity (deg/sec)
 const MAX_ANGULAR_VELOCITY: f64 = 18.0;
+/// Max Angular acceleration (deg/sec^2)
+const MAX_ANGULAR_ACCELERATION: f64 = 9.0;
+
+const ANGLE_P: f64 = 0.7;
+const ANGLE_D: f64 = 1.5;
+
+const FEEDFORWARD_FACTOR: f64 = 2.22;
+
+/// Max linear acceleration (mm/sec^2)
+const MAX_LINEAR_ACCELERATION: f64 = 40.0;
 /// Max linear velocity (mm/sec)
 const MAX_LINEAR_VELOCITY: f64 = 80.0;
 
-/// Max Angular acceleration (deg/sec^2)
-const MAX_ANGULAR_ACCELERATION: f64 = 5.0;
-/// Max linear acceleration (mm/sec^2)
-const MAX_LINEAR_ACCELERATION: f64 = 40.0;
-
-const ANGLE_P: f64 = 0.23;
-const LINEAR_P: f64 = 1.35;
-
-const ANGLE_D: f64 = 0.9;
-const LINEAR_D: f64 = 3.3;
-
-
-pub type RobotLock = Arc<RwLock<Robot>>;
-
-struct Circle {
-    x: f64,
-    y: f64,
-    r: f64,
-}
-
-impl Circle {
-    pub fn new(x: f64, y: f64, r: f64,) -> Self {
-        Circle { x: x, y: y, r: r }
-    }
-}
+const LINEAR_P: f64 = 2.5;
+const LINEAR_D: f64 = 4.0;
 
 
 fn degrees_to_radians(degrees: f64) -> f64 {
@@ -49,15 +45,19 @@ fn degrees_to_radians(degrees: f64) -> f64 {
 fn radians_to_degrees(degrees: f64) -> f64 {
     degrees * 180.0 / PI
 }
+
+pub type RobotLock = Arc<RwLock<Robot>>;
 pub struct Robot {
-    joint_state: RobotJointState,
-    target_joint_state: RobotJointState,
+    state: RobotState,
+    target_state: RobotState,
     target_coord_state: Option<Coord4DOF>,
+
+    velocity: RobotState,
 }
 
 impl Robot {
     pub fn new() -> Arc<RwLock<Self>> {
-        let robot_lock: RobotLock = Arc::new(RwLock::new(Self { joint_state: RobotJointState::default(), target_joint_state: RobotJointState::default(), target_coord_state: None }));
+        let robot_lock: RobotLock = Arc::new(RwLock::new(Self { state: RobotState::default(), target_state: RobotState::default(), target_coord_state: None, velocity: RobotState::default()}));
         
         Self::controller(robot_lock.clone());
 
@@ -71,84 +71,91 @@ impl Robot {
 
             // Store previous positions to calculate velocity.
 
-            let mut state_velocity: RobotJointState = RobotJointState::default();
-            
-            // let mut count = 0;
+            let mut count = 0;
             loop {
-                // count += 1;
-
                 let start = Instant::now();
-                //todo!("Add control logic. With max velocities.");
-
+                
+                let veloctiy = robot_lock.read().await.velocity;
+                let mut joint_state_velocity: JointState = veloctiy.joint_state;
+                
+                // if count%50 == 0 {
+                //     println!("{:?}", base_velocity.x);
+                // }
+                // count+=1;
 
                 let target_coord_state = robot_lock.read().await.target_coord_state;
                 if let Some(coord_state) = target_coord_state {
-                    robot_lock.write().await.set_coord_state(coord_state);
+                    robot_lock.write().await.set_target_coord_state(coord_state);
                 }
 
-                let state;
-                let target;
+                let joint_state;
+                let joint_target;
+                let base_state;
+                let base_target;
                 {
                     let robot = robot_lock.read().await;
-                    state = robot.joint_state;
-                    target = robot.target_joint_state;
+                    joint_state = robot.state.joint_state;
+                    joint_target = robot.target_state.joint_state;
+
+                    base_state = robot.state.base_state;
+                    base_target = robot.target_state.base_state;
                 }
 
-                // Get the error
-                let state_error = RobotJointState::clamped_sub(target, state);
+                let mut base_state_error = Coord4DOF::default();
+                base_state_error.x = base_target.x - base_state.x;
+                base_state_error.y = base_target.y - base_state.y;
+                base_state_error.z = base_target.z - base_state.z;
+                base_state_error.theta = shortest_angle_diff(base_target.theta, base_state.theta);
 
-                let mut state_acceleration = RobotJointState::default();
+                let mut base_velocity = base_state_error.apply_control(BASE_LINEAR_P, BASE_ANGLE_P);
+                base_velocity = base_velocity - base_velocity.apply_control(BASE_LINEAR_D, BASE_ANGLE_D);
+
+                base_velocity.clamp(MAX_BASE_LINEAR_VEL, MAX_BASE_ANGLE_VEL);
+
+                let new_base_state = base_state + base_velocity.val_mul(CONTROLLER_LOOP_TIME_S);
+
+
+                // Get the error
+                let joint_state_error = JointState::clamped_sub(joint_target, joint_state);
+
+                let mut joint_state_acceleration = JointState::default();
 
                 // Calculate P
-                state_acceleration.swing_rotation_deg = state_error.swing_rotation_deg*ANGLE_P;
-                state_acceleration.lift_elevation_mm = state_error.lift_elevation_mm*LINEAR_P;
-                state_acceleration.elbow_rotation_deg = state_error.elbow_rotation_deg*ANGLE_P;
-                state_acceleration.wrist_rotation_deg = state_error.wrist_rotation_deg*ANGLE_P;
-                state_acceleration.gripper_open_mm = state_error.gripper_open_mm*LINEAR_P;
+                joint_state_acceleration.swing_rotation_deg = joint_state_error.swing_rotation_deg*ANGLE_P;
+                joint_state_acceleration.lift_elevation_mm = joint_state_error.lift_elevation_mm*LINEAR_P;
+                joint_state_acceleration.elbow_rotation_deg = joint_state_error.elbow_rotation_deg*ANGLE_P;
+                joint_state_acceleration.wrist_rotation_deg = joint_state_error.wrist_rotation_deg*ANGLE_P;
+                joint_state_acceleration.gripper_open_mm = joint_state_error.gripper_open_mm*LINEAR_P;
 
-                // if count % 50 == 0{
-                //     println!("Vel {:?}", state_velocity);
-                //     println!("A {:?}", state_acceleration);
-                // }
-                // Calculate D
-                // if let Some(prev_state) = prev_state {
-                    // Velocity is already know.
-                    // let velocity = RobotJointState::clamped_sub(state, prev_state).val_div(CONTROLLER_LOOP_TIME_S);
-
-                state_acceleration.swing_rotation_deg += -state_velocity.swing_rotation_deg*ANGLE_D;
-                state_acceleration.lift_elevation_mm += -state_velocity.lift_elevation_mm*LINEAR_D;
-                state_acceleration.elbow_rotation_deg += -state_velocity.elbow_rotation_deg*ANGLE_D;
-                state_acceleration.wrist_rotation_deg += -state_velocity.wrist_rotation_deg*ANGLE_D;
-                state_acceleration.gripper_open_mm += -state_velocity.gripper_open_mm*LINEAR_D;
-                
-                // if count % 50 == 0 {
-                //     println!("V2 {:?}", state_velocity);
-                //     println!("A2 {:?}", state_acceleration);
-                // }
-                // } 
-
+                joint_state_acceleration.swing_rotation_deg += -joint_state_velocity.swing_rotation_deg*ANGLE_D;
+                joint_state_acceleration.lift_elevation_mm += -joint_state_velocity.lift_elevation_mm*LINEAR_D;
+                joint_state_acceleration.elbow_rotation_deg += -joint_state_velocity.elbow_rotation_deg*ANGLE_D;
+                joint_state_acceleration.wrist_rotation_deg += -joint_state_velocity.wrist_rotation_deg*ANGLE_D;
+                joint_state_acceleration.gripper_open_mm += -joint_state_velocity.gripper_open_mm*LINEAR_D;
 
                 // Clamp acceleration.
-                state_acceleration.swing_rotation_deg = state_acceleration.swing_rotation_deg.clamp(-MAX_ANGULAR_ACCELERATION, MAX_ANGULAR_ACCELERATION);
-                state_acceleration.lift_elevation_mm = state_acceleration.lift_elevation_mm.clamp(-MAX_LINEAR_ACCELERATION, MAX_LINEAR_ACCELERATION);
-                state_acceleration.elbow_rotation_deg = state_acceleration.elbow_rotation_deg.clamp(-MAX_ANGULAR_ACCELERATION, MAX_ANGULAR_ACCELERATION);
-                state_acceleration.wrist_rotation_deg = state_acceleration.wrist_rotation_deg.clamp(-MAX_ANGULAR_ACCELERATION, MAX_ANGULAR_ACCELERATION);
-                state_acceleration.gripper_open_mm = state_acceleration.gripper_open_mm.clamp(-MAX_LINEAR_ACCELERATION, MAX_LINEAR_ACCELERATION);
+                joint_state_acceleration.swing_rotation_deg = joint_state_acceleration.swing_rotation_deg.clamp(-MAX_ANGULAR_ACCELERATION/ELBOW_LENGTH_M, MAX_ANGULAR_ACCELERATION/ELBOW_LENGTH_M);
+                joint_state_acceleration.lift_elevation_mm = joint_state_acceleration.lift_elevation_mm.clamp(-MAX_LINEAR_ACCELERATION, MAX_LINEAR_ACCELERATION);
+                joint_state_acceleration.elbow_rotation_deg = joint_state_acceleration.elbow_rotation_deg.clamp(-MAX_ANGULAR_ACCELERATION, MAX_ANGULAR_ACCELERATION);
+                joint_state_acceleration.wrist_rotation_deg = joint_state_acceleration.wrist_rotation_deg.clamp(-MAX_ANGULAR_ACCELERATION/GRIPPER_LENGTH_M, MAX_ANGULAR_ACCELERATION/GRIPPER_LENGTH_M);
+                joint_state_acceleration.gripper_open_mm = joint_state_acceleration.gripper_open_mm.clamp(-MAX_LINEAR_ACCELERATION, MAX_LINEAR_ACCELERATION);
 
                 // Apply acceleration
-                state_velocity = state_velocity + state_acceleration.val_mul(CONTROLLER_LOOP_TIME_S);
+                joint_state_velocity = joint_state_velocity + joint_state_acceleration.val_mul(CONTROLLER_LOOP_TIME_S);
 
                 // Clamp velocity
-                state_velocity.swing_rotation_deg = state_velocity.swing_rotation_deg.clamp(-MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
-                state_velocity.lift_elevation_mm = state_velocity.lift_elevation_mm.clamp(-MAX_LINEAR_VELOCITY, MAX_LINEAR_VELOCITY);
-                state_velocity.elbow_rotation_deg = state_velocity.elbow_rotation_deg.clamp(-MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
-                state_velocity.wrist_rotation_deg = state_velocity.wrist_rotation_deg.clamp(-MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
-                state_velocity.gripper_open_mm = state_velocity.gripper_open_mm.clamp(-MAX_LINEAR_VELOCITY, MAX_LINEAR_VELOCITY);
+                joint_state_velocity.swing_rotation_deg = joint_state_velocity.swing_rotation_deg.clamp(-MAX_ANGULAR_VELOCITY/ELBOW_LENGTH_M, MAX_ANGULAR_VELOCITY/ELBOW_LENGTH_M);
+                joint_state_velocity.lift_elevation_mm = joint_state_velocity.lift_elevation_mm.clamp(-MAX_LINEAR_VELOCITY, MAX_LINEAR_VELOCITY);
+                joint_state_velocity.elbow_rotation_deg = joint_state_velocity.elbow_rotation_deg.clamp(-MAX_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
+                joint_state_velocity.wrist_rotation_deg = joint_state_velocity.wrist_rotation_deg.clamp(-MAX_ANGULAR_VELOCITY/GRIPPER_LENGTH_M, MAX_ANGULAR_VELOCITY/GRIPPER_LENGTH_M);
+                joint_state_velocity.gripper_open_mm = joint_state_velocity.gripper_open_mm.clamp(-MAX_LINEAR_VELOCITY, MAX_LINEAR_VELOCITY);
 
                 // Update by applying velocity.
                 {
                     let mut robot = robot_lock.write().await;
-                    robot.set_state(state+state_velocity.val_mul(CONTROLLER_LOOP_TIME_S));
+                    robot.set_state(joint_state+joint_state_velocity.val_mul(CONTROLLER_LOOP_TIME_S), new_base_state);
+                    robot.velocity.joint_state = joint_state_velocity;
+                    robot.velocity.base_state = base_velocity;
                 }
 
 
@@ -162,44 +169,51 @@ impl Robot {
     }
 
     // Rename
-    fn set_state(&mut self, mut new_state: RobotJointState) {
-        new_state.check_limits();
+    fn set_state(&mut self, mut new_joint_state: JointState, new_base_state: Coord4DOF) {
+        new_joint_state.check_limits();
         
-        self.joint_state = new_state;
+        self.state.joint_state = new_joint_state;
+        self.state.base_state = new_base_state;
     }
 
-    pub fn get_state(&self) -> RobotJointState{
-        return self.joint_state;
+    pub fn get_state(&self) -> RobotState {
+        return self.state;
     }
 
-    pub fn set_joint_target_state(&mut self, mut target_state: RobotJointState) {
+    pub fn set_joint_target_state(&mut self, mut target_state: JointState, erase_coord_target: bool) {
         target_state.check_limits();
-        self.target_joint_state = target_state;
+        self.target_state.joint_state = target_state;
 
-        // Is joint state is set refresh target state (I do not like this, it should only be wehn called externally)
-        self.target_coord_state = None;
+        if erase_coord_target {
+            // Is joint state is set refresh target state (I do not like this, it should only be wehn called externally)
+            self.target_coord_state = None;
+        }
     }
 
-    fn ik(&self, coord_state: Coord4DOF) -> Option<RobotJointState> {
+    fn ik(&self, coord_state: Coord4DOF) -> Option<JointState> {
 
-        let mut target_state: RobotJointState = RobotJointState::default();
+        let mut target_state: JointState = JointState::default();
 
         target_state.lift_elevation_mm = coord_state.z*1000.0;
 
         // Get end effector position
 
-        let end_effector_rad = degrees_to_radians(clamp_angle_diff(coord_state.theta));
-        
+        let end_effector_rad = degrees_to_radians(limit_angle(coord_state.theta - self.velocity.base_state.theta*FEEDFORWARD_FACTOR));
 
-        let end_effector_pos =  Coord2D{
-            x: coord_state.x - GRIPPER_LENGTH_M*(end_effector_rad.cos()),
-            y: coord_state.y - GRIPPER_LENGTH_M*(end_effector_rad.sin()),
+        let current_state = self.get_coord_state();
+        let base_applied_x_vel = self.velocity.base_state.x - current_state.y*degrees_to_radians(self.velocity.base_state.theta);
+        let base_applied_y_vel = self.velocity.base_state.y + current_state.x*degrees_to_radians(self.velocity.base_state.theta);
+
+        let end_effector_to_base =  Coord4DOF{
+            x: coord_state.x - self.state.base_state.x - FEEDFORWARD_FACTOR*base_applied_x_vel - GRIPPER_LENGTH_M*(end_effector_rad.cos()),
+            y: coord_state.y - self.state.base_state.y - FEEDFORWARD_FACTOR*base_applied_y_vel - GRIPPER_LENGTH_M*(end_effector_rad.sin()),
+            z: coord_state.z - self.state.base_state.z - FEEDFORWARD_FACTOR*self.velocity.base_state.z,
+            theta: coord_state.theta
         };
 
-        let base_angle = (end_effector_pos.y).atan2(end_effector_pos.x);
+        let base_angle = (end_effector_to_base.y).atan2(end_effector_to_base.x);
 
-
-        let c = (end_effector_pos.x.powf(2.0) + end_effector_pos.y.powf(2.0)).sqrt();
+        let c = (end_effector_to_base.x.powf(2.0) + end_effector_to_base.y.powf(2.0)).sqrt();
         if c > WRIST_LENGTH_M+ELBOW_LENGTH_M {return None;}
 
         
@@ -213,29 +227,38 @@ impl Robot {
         let swing_angle = base_angle + swing_angle_local;
         
 
-        target_state.swing_rotation_deg = radians_to_degrees(swing_angle);
+        // Use set target state!
+        target_state.swing_rotation_deg = radians_to_degrees(swing_angle) - self.state.base_state.theta;
         target_state.elbow_rotation_deg = radians_to_degrees(elbow_angle);
         target_state.wrist_rotation_deg = radians_to_degrees(end_effector_rad - elbow_angle - swing_angle);
+        target_state.lift_elevation_mm = end_effector_to_base.z * 1000.0;
         
         return Some(target_state);
     }
 
-    pub fn set_coord_state(&mut self, coord_state: Coord4DOF) {
+    pub fn set_target_coord_state(&mut self, coord_state: Coord4DOF) {
         if let Some(state) = self.ik(coord_state) {
-            self.set_joint_target_state(state);
+            self.set_joint_target_state(state, false);
             self.target_coord_state = Some(coord_state);
         }
     }
 
+    pub fn set_target_base_state(&mut self, coord_state: Coord4DOF) {
+        self.target_state.base_state = coord_state;
+    }
+
     pub fn get_coord_state(&self) -> Coord4DOF {
-        let state = self.joint_state;
+        let joint_state = self.state.joint_state;
+        let base_state = self.state.base_state;
         
         let mut coords = Coord4DOF::default();
-        coords.z = state.lift_elevation_mm/1000.0;
+        coords.x = base_state.x;
+        coords.y = base_state.y;
+        coords.z = joint_state.lift_elevation_mm/1000.0 + base_state.z;
 
-        let elbow_angle_rad = degrees_to_radians(state.swing_rotation_deg);
-        let wrist_angle_rad = elbow_angle_rad+degrees_to_radians(state.elbow_rotation_deg);
-        let gripper_angle_rad = wrist_angle_rad + degrees_to_radians(state.wrist_rotation_deg);
+        let elbow_angle_rad = degrees_to_radians(base_state.theta+ joint_state.swing_rotation_deg);
+        let wrist_angle_rad = elbow_angle_rad+degrees_to_radians(joint_state.elbow_rotation_deg);
+        let gripper_angle_rad = wrist_angle_rad + degrees_to_radians(joint_state.wrist_rotation_deg);
 
         // Calculate elbow coordinates
         coords.x += ELBOW_LENGTH_M * elbow_angle_rad.cos();
@@ -248,6 +271,8 @@ impl Robot {
         // Calculate gripper coordinates relative to the wrist
         coords.x += GRIPPER_LENGTH_M * gripper_angle_rad.cos();
         coords.y += GRIPPER_LENGTH_M * gripper_angle_rad.sin();
+
+        coords.theta = radians_to_degrees(gripper_angle_rad);
 
         return coords;
     }

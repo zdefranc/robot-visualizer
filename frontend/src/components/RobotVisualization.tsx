@@ -1,21 +1,21 @@
 import * as THREE from 'three';
-import { JointState, RobotState } from '../types/RobotTypes';
+import {  RobotState } from '../types/RobotTypes';
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 import { useEffect, useRef } from "react";
 
-const BASE_HEIGHT = 0.3; // Important for IK
+const BASE_HEIGHT = 0.3; 
 const BASE_RADIUS = 0.6; 
 
 const LIFT_HEIGHT = 4; 
 const LIFT_RADIUS = 0.3;
 
-const ELBOW_LENGTH = 2; // Important for IK
+const ELBOW_LENGTH = 2; 
 const ELBOW_WIDTH = 0.3;
 const ELBOW_DEPTH = 0.5;
 
-const WRIST_LENGTH = 1; // Important for IK
+const WRIST_LENGTH = 1; 
 const WRIST_WIDTH = 0.25;
 const WRIST_DEPTH = 0.35;
 

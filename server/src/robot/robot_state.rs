@@ -76,18 +76,6 @@ impl JointState {
         return output
     }
 
-    pub fn val_div(&mut self, val: f64) -> JointState{
-        let mut output = JointState::default();
-        
-        output.swing_rotation_deg = self.swing_rotation_deg / val;
-        output.lift_elevation_mm = self.lift_elevation_mm / val;
-        output.elbow_rotation_deg = self.elbow_rotation_deg / val;
-        output.wrist_rotation_deg = self.wrist_rotation_deg / val;
-        output.gripper_open_mm = self.gripper_open_mm / val;
-
-        return output
-    }
-
     /// Finds the difference between 2 `JointState`s.
     pub fn clamped_sub(lhs: JointState, rhs: JointState) -> JointState{
         

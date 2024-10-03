@@ -14,7 +14,7 @@ pub fn clamp(val: f64, clamp_val: f64) -> f64{
     }
 }
 
-/// Returns the shortest angle between 2 angles
+/// Returns the shortest difference between 2 angles.
 pub fn shortest_angle_diff(angle1: f64, angle2: f64) -> f64 {
     let angle = angle1 - angle2;
     return match angle {
@@ -27,6 +27,7 @@ pub fn shortest_angle_diff(angle1: f64, angle2: f64) -> f64 {
     }
 }
 
+/// Holds the state of each of the joints the make up the robot.
 #[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Debug, Default)]
 pub struct JointState {
     /// Swing rotation (degrees).
@@ -42,6 +43,7 @@ pub struct JointState {
 }
 
 impl JointState {
+    /// Ensures robot's joint state is within the defined limits of what is possible.
     pub fn check_limits(&mut self) {
         self.swing_rotation_deg = limit_angle(self.swing_rotation_deg);
         self.elbow_rotation_deg = limit_angle(self.elbow_rotation_deg);
@@ -61,14 +63,15 @@ impl JointState {
 
     }
 
-    pub fn val_mul(&mut self, val: f64) -> JointState{
+    /// Multiple each joint value by `mul`.
+    pub fn val_mul(&mut self, mul: f64) -> JointState{
         let mut output = JointState::default();
         
-        output.swing_rotation_deg = self.swing_rotation_deg * val;
-        output.lift_elevation_mm = self.lift_elevation_mm * val;
-        output.elbow_rotation_deg = self.elbow_rotation_deg * val;
-        output.wrist_rotation_deg = self.wrist_rotation_deg * val;
-        output.gripper_open_mm = self.gripper_open_mm * val;
+        output.swing_rotation_deg = self.swing_rotation_deg * mul;
+        output.lift_elevation_mm = self.lift_elevation_mm * mul;
+        output.elbow_rotation_deg = self.elbow_rotation_deg * mul;
+        output.wrist_rotation_deg = self.wrist_rotation_deg * mul;
+        output.gripper_open_mm = self.gripper_open_mm * mul;
 
         return output
     }
@@ -85,6 +88,7 @@ impl JointState {
         return output
     }
 
+    /// Finds the difference between 2 `JointState`s.
     pub fn clamped_sub(lhs: JointState, rhs: JointState) -> JointState{
         
         let mut output = lhs - rhs;
@@ -139,6 +143,7 @@ impl Mul for JointState {
     }
 }
 
+/// A 4DOF corrdinate that contains an x, y, and z value as well as an angle.
 #[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Debug, Default)]
 pub struct Coord4DOF {
     pub x: f64,
@@ -159,6 +164,7 @@ impl Coord4DOF {
         return output
     }
 
+    /// Applies a linear and angular control value to ease in applying controller operations.
     pub fn apply_control(&self, linear: f64, angular: f64) -> Coord4DOF {
         let mut output = Coord4DOF::default();
         
@@ -170,6 +176,7 @@ impl Coord4DOF {
         return output
     }
 
+    /// Clamps the position and angle between the specified `clamp_pos` and `clamp_ang`.`
     pub fn clamp(&mut self, clamp_pos: f64, clamp_ang: f64) {
         self.x = clamp(self.x, clamp_pos);
 
@@ -205,50 +212,51 @@ impl Sub for Coord4DOF {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Debug, Default)]
-pub struct Coord2D {
-    pub x: f64,
-    pub y: f64,
-}
+// #[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Debug, Default)]
+// pub struct Coord2D {
+//     pub x: f64,
+//     pub y: f64,
+// }
 
-impl Coord2D {
-    pub fn val_mul(&self, val: f64) -> Coord2D {
-        let mut output = Coord2D::default();
+// impl Coord2D {
+//     pub fn val_mul(&self, val: f64) -> Coord2D {
+//         let mut output = Coord2D::default();
         
-        output.x = self.x * val;
-        output.y = self.y * val;
+//         output.x = self.x * val;
+//         output.y = self.y * val;
 
-        return output
-    }
+//         return output
+//     }
 
-    pub fn clamp(&mut self, clamp_val: f64) {
-        self.x = clamp(self.x, clamp_val);
-        self.y = clamp(self.y, clamp_val);
-    }
-}
+//     pub fn clamp(&mut self, clamp_val: f64) {
+//         self.x = clamp(self.x, clamp_val);
+//         self.y = clamp(self.y, clamp_val);
+//     }
+// }
 
-impl Add for Coord2D {
-    type Output = Coord2D;
+// impl Add for Coord2D {
+//     type Output = Coord2D;
 
-    fn add(self, rhs: Coord2D) -> Coord2D {
-        Coord2D {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-        }
-    }
-}
+//     fn add(self, rhs: Coord2D) -> Coord2D {
+//         Coord2D {
+//             x: self.x + rhs.x,
+//             y: self.y + rhs.y,
+//         }
+//     }
+// }
 
-impl Sub for Coord2D {
-    type Output = Coord2D;
+// impl Sub for Coord2D {
+//     type Output = Coord2D;
 
-    fn sub(self, rhs: Coord2D) -> Coord2D {
-        Coord2D {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-        }
-    }
-}
+//     fn sub(self, rhs: Coord2D) -> Coord2D {
+//         Coord2D {
+//             x: self.x - rhs.x,
+//             y: self.y - rhs.y,
+//         }
+//     }
+// }
 
+/// Holds both the joint and base state of the robot.
 #[derive(serde::Serialize, serde::Deserialize, Copy, Clone, Debug, Default)]
 pub struct RobotState {
     pub joint_state: JointState,

@@ -4,9 +4,9 @@
     background-color: gray;
 }
 .robot-container {
-    display: flex; /* Enables flexbox layout */
-    justify-content: space-between; /* Distributes components evenly */
-    align-items: center; /* Vertically aligns items in the center */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     width: 100vw;
     position: relative;
     box-sizing: border-box; 
@@ -14,19 +14,19 @@
 
 .robot-div {
     float: left;
-    margin-left: 5%;
+    margin-left: 2%;
     margin-right: 2%;
     width: 50vw;
 }
 
 
 .command-div {
-    flex: 1; /* Take up equal space; adjust as needed */
+    flex: 1;
     border: 1px solid #ddd;
     padding: 10px;
     width: 40%;
     height: 100vh;
-    margin-right: 5%;
-    position: absolute; /* Absolute positioning to control position inside the container */
-    right: 1%; /* Ensures the element is 5px from the right side */
+    margin-right: 2%;
+    position: absolute;
+    right: 1%;
 }

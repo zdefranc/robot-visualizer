@@ -2,7 +2,7 @@
     height:75vh;
 }
 .state-label {
-    font-size: 0.7em; /* This ensures the input font size adjusts with the overall font-size */
+    font-size: 0.7em;
     display: flex;
     width: 80%;
     margin-bottom: -5%;
@@ -13,15 +13,15 @@
     margin-top: 1px;
     margin-bottom: 1px;
     padding: 5px;
-    width: 100px; /* Makes input fields uniform in width */
-    box-sizing: border-box; /* Ensures padding and border are included in the element’s width and height */
-    position: absolute; /* Absolute positioning to control position inside the container */
-    right: 1px; /* Ensures the element is 5px from the right side */
+    width: 100px;
+    box-sizing: border-box;
+    position: absolute;
+    right: 1px;
 }
 
 
 .title {
-    font-size: 0.8em; /* Decrease text size slightly */
+    font-size: 0.8em;
 }
 
 .button {

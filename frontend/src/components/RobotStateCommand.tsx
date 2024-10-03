@@ -4,9 +4,10 @@ import { useState } from 'react';
  
 import { Coord4DOF as Coord4DOF, JointState } from '../types/RobotTypes';
 import styles from '../css/RobotStateCommand.module.css'
+import { StateInput } from './StateInput';
 
 // Initial state values
-const initialAccuatorState: JointState = {
+const initialJointState: JointState = {
   swing_rotation_deg: 0,
   lift_elevation_mm: 0,
   elbow_rotation_deg: 0,
@@ -14,6 +15,7 @@ const initialAccuatorState: JointState = {
   gripper_open_mm: 0,
 };
 
+// Initial state values
 const initialCoord4DOFState: Coord4DOF = {
   x: 0,
   y: 0,
@@ -21,21 +23,14 @@ const initialCoord4DOFState: Coord4DOF = {
   theta: 0,
 };
 
-const initialCoord2DState: Coord4DOF = {
-  x: 0,
-  y: 0,
-  z: 0,
-  theta: 0,
-};
-
 export const RobotStateCommand = () => {
-    // State to store the user inputs for the robot's actuators
-  const [actuatorState, setActuatorState] = useState<JointState>(initialAccuatorState);
-  const [coordState, setCoordState] = useState<Coord4DOF>(initialCoord4DOFState);
-  const [baseCoord, setBaseCoord] = useState<Coord4DOF>(initialCoord2DState);
+  // Store the state of the values to request.
+  const [jointState, setJointState] = useState<JointState>(initialJointState);
+  const [endEffectorState, setEndEffectorState] = useState<Coord4DOF>(initialCoord4DOFState);
+  const [baseCoord, setBaseCoord] = useState<Coord4DOF>(initialCoord4DOFState);
 
-  // Handle input change and validate that the value is a number
-  const handleAccuatorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle input change for the joint state and validate that the value is a number
+  const handleJointChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
     // Convert the value to a number
@@ -43,18 +38,16 @@ export const RobotStateCommand = () => {
     
     // Check if the input is a valid number
     if (!isNaN(numericValue)) {
-      // Set the value to be the numeric output.
-      e.target.value = String(numericValue);
-      // Update the actuator state with the new value
-      setActuatorState(prevState => ({
+      // Update the joint state with the new value
+      setJointState(prevState => ({
         ...prevState,
         [name]: numericValue,
       }));
     }
   };
 
-  // Handle input change and validate that the value is a number
-  const handleCoord4DOFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle input change for the end effector and validate that the value is a number
+  const handleEndEffectorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
     // Convert the value to a number
@@ -62,17 +55,15 @@ export const RobotStateCommand = () => {
 
     // Check if the input is a valid number
     if (!isNaN(numericValue)) {
-      // Set the value to be the numeric output.
-      e.target.value = String(numericValue);
-      // Update the actuator state with the new value
-      setCoordState(prevState => ({
+      // Update the end effector state with the new value
+      setEndEffectorState(prevState => ({
         ...prevState,
         [name]: numericValue,
       }));
     }
   };
 
-  // Handle input change and validate that the value is a number
+  // Handle input change for the base and validate that the value is a number
   const handleBaseCoordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -81,9 +72,7 @@ export const RobotStateCommand = () => {
 
     // Check if the input is a valid number
     if (!isNaN(numericValue)) {
-      // Set the value to be the numeric output.
-      e.target.value = String(numericValue);
-      // Update the actuator state with the new value
+      // Update the base state with the new value
       setBaseCoord(prevState => ({
         ...prevState,
         [name]: numericValue,
@@ -91,24 +80,18 @@ export const RobotStateCommand = () => {
     }
   };
 
-  // Function to handle sending the actuator state over the WebSocket
-  const sendActuatorState = () => {
-
-    // Emit the "set actuator state" event with the current actuator state
-    socket.emit('set actuator state', actuatorState);
+  // Function to handle sending the joint state over the WebSocket
+  const sendJointState = () => {
+    socket.emit('set joint state', jointState);
   };
 
-  // Function to handle sending the actuator state over the WebSocket
+  // Function to handle sending the end effector state over the WebSocket
   const sendCoordState = () => {
-
-    // Emit the "set actuator state" event with the current actuator state
-    socket.emit('set coord state', coordState);
+    socket.emit('set coord state', endEffectorState);
   };
 
-    // Function to handle sending the actuator state over the WebSocket
+    // Function to handle sending the base state over the WebSocket
   const sendBaseCoordState = () => {
-
-    // Emit the "set actuator state" event with the current actuator state
     socket.emit('set base state', baseCoord);
   };
 
@@ -119,66 +102,31 @@ export const RobotStateCommand = () => {
         <form>
           <label className={styles['state-label']}>
             <text>Swing Rotation (degrees):</text>
-            <input 
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="swing_rotation_deg"
-              value={actuatorState.swing_rotation_deg}
-              onChange={handleAccuatorChange}
-            />
+            <StateInput handleChange={handleJointChange} name='swing_rotation_deg'/>
           </label>
           <br className={styles['break']}/>
           <label className={styles['state-label']}>
           <text>Lift Elevation (mm):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="lift_elevation_mm"
-              value={actuatorState.lift_elevation_mm}
-              onChange={handleAccuatorChange}
-            />
+            <StateInput handleChange={handleJointChange} name='lift_elevation_mm'/>
           </label>
           <br className={styles['break']}/>
           <label className={styles['state-label']}>
             <text>Elbow Rotation (degrees):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="elbow_rotation_deg"
-              value={actuatorState.elbow_rotation_deg}
-              onChange={handleAccuatorChange}
-            />
+            <StateInput handleChange={handleJointChange} name='elbow_rotation_deg'/>
           </label>
           <br className={styles['break']}/>
           <label className={styles['state-label']}>
             <text>Wrist Rotation (degrees):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="wrist_rotation_deg"
-              value={actuatorState.wrist_rotation_deg}
-              onChange={handleAccuatorChange}
-            />
+            <StateInput handleChange={handleJointChange} name='wrist_rotation_deg'/>
           </label>
           <br className={styles['break']}/>
           <label className={styles['state-label']}>
             <text>Gripper Opening (mm):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="gripper_open_mm"
-              value={actuatorState.gripper_open_mm}
-              onChange={handleAccuatorChange}
-            />
+            <StateInput handleChange={handleJointChange} name='gripper_open_mm'/>
           </label>
           <br className={styles['break']}/>
-          <button className={styles['button']} type="button" onClick={sendActuatorState}>
-            Send Actuator State
+          <button className={styles['button']} type="button" onClick={sendJointState}>
+            Send Joint State
           </button>
         </form>
       </div>
@@ -188,50 +136,22 @@ export const RobotStateCommand = () => {
         <form>
           <label className={styles['state-label']}>
             <text>X (m):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="x"
-              value={coordState.x}
-              onChange={handleCoord4DOFChange}
-            />
+            <StateInput handleChange={handleEndEffectorChange} name='x'/>
           </label>
           <br className={styles['break']}/>
           <label className={styles['state-label']}>
             <text>Y (m):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="y"
-              value={coordState.y}
-              onChange={handleCoord4DOFChange}
-            />
+            <StateInput handleChange={handleEndEffectorChange} name='y'/>
           </label>
           <br className={styles['break']}/>
           <label className={styles['state-label']}>
             <text>Z (m):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="z"
-              value={coordState.z}
-              onChange={handleCoord4DOFChange}
-            />
+            <StateInput handleChange={handleEndEffectorChange} name='z'/>
           </label>
           <br className={styles['break']}/>
           <label className={styles['state-label']}>
             <text>Theta (deg):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="theta"
-              value={coordState.theta}
-              onChange={handleCoord4DOFChange}
-            />
+            <StateInput handleChange={handleEndEffectorChange} name='theta'/>
           </label>
           <br className={styles['break']}/>
           <button className={styles['button']} type="button" onClick={sendCoordState}>
@@ -246,50 +166,22 @@ export const RobotStateCommand = () => {
         <form>
           <label className={styles['state-label']}>
             <text>X (m):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="x"
-              value={baseCoord.x}
-              onChange={handleBaseCoordChange}
-            />
+            <StateInput handleChange={handleBaseCoordChange} name='x'/>
           </label>
           <br className={styles['break']}/>
           <label className={styles['state-label']}>
             <text>Y (m):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="y"
-              value={baseCoord.y}
-              onChange={handleBaseCoordChange}
-            />
+            <StateInput handleChange={handleBaseCoordChange} name='y'/>
           </label>
           <br className={styles['break']}/>
           <label className={styles['state-label']}>
             <text>Z (m):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="z"
-              value={baseCoord.z}
-              onChange={handleBaseCoordChange}
-            />
+            <StateInput handleChange={handleBaseCoordChange} name='z'/>
           </label>
           <br className={styles['break']}/>
           <label className={styles['state-label']}>
             <text>Theta (deg):</text>
-            <input
-              className={styles['state-input']}
-              type="number"
-              step="any"
-              name="theta"
-              value={baseCoord.theta}
-              onChange={handleBaseCoordChange}
-            />
+            <StateInput handleChange={handleBaseCoordChange} name='theta'/>
           </label>
           <br className={styles['break']}/>
           <button className={styles['button']} type="button" onClick={sendBaseCoordState}>

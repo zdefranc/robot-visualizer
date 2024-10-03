@@ -2,8 +2,8 @@
     height: 155px;
 }
 .state-div {
-    font-size: 0.6em; /* Decrease text size slightly */
-    display: flex; /* Place the lists horizontally */
+    font-size: 0.6em;
+    display: flex;
     font-family: 'Arial', sans-serif;
 }
 
@@ -13,35 +13,35 @@
 
 
 .joint-list {
-    list-style: none; /* Remove default bullet points */
+    list-style: none;
     padding: 0;
-    margin: 0 5px; /* Space between the lists */
-    width: 46%; /* Make each <li> uniform in width */
-    float: left; /* Place each ul horizontally */
+    margin: 0 5px;
+    width: 46%;
+    float: left;
 }
   
 .state-list {
-    list-style: none; /* Remove default bullet points */
+    list-style: none;
     padding: 0;
-    margin: 0 5px; /* Space between the lists */
-    width: 27%; /* Make each <li> uniform in width */
-    float: left; /* Place each ul horizontally */
+    margin: 0 5px;
+    width: 27%;
+    float: left;
 }
 
 .state-header {
-    font-size: 1.1em; /* Decrease text size slightly */
+    font-size: 1.1em;
     padding: 0rem;
 }
 
 .state-item {
-    padding: 1px 0; /* Add some padding for better readability */
+    padding: 1px 0;
 }
 
 .h2 {
-    clear: both; /* Ensure the header stays above the <ul> elements */
+    clear: both;
 }
 
 .p {
-    clear: both; /* Ensure the message stays below the <ul> elements */
+    clear: both;
 }
   

@@ -5,32 +5,31 @@ import { RobotStateDisplay } from './RobotStateDisplay';
 import { RobotStateCommand } from './RobotStateCommand';
 import RobotVisualization from './RobotVisualization';
 
-import { Coord4DOF, JointState, RobotState } from '../types/RobotTypes';
+import { Coord4DOF, RobotState } from '../types/RobotTypes';
 
 import styles from '../css/Robot.module.css'
 
 export const Robot = () => {
-  // State to store the robot's joint state received from the server
   const [robotState, setRobotState] = useState<RobotState | null>(null);
   const [coords, setCoords] = useState<Coord4DOF | null>(null);
 
   useEffect(() => {
-    // Listen for the "state" message from the server
-    socket.on('state', (data: RobotState) => {
-      setRobotState(data);  // Update the state with the received data
+    socket.on('joint state', (data: RobotState) => {
+      setRobotState(data);  // Update the joints with the received data.
     });
 
-    socket.on('coords', (data: Coord4DOF) => {
-        setCoords(data);  // Update the state with the received data
+    socket.on('base coords', (data: Coord4DOF) => {
+      setCoords(data);  // Update the base with the received data.
     });
 
     socket.on('disconnect', () => {
-      setRobotState(null);
+      setRobotState(null); 
     })
 
     // Cleanup on component unmount
     return () => {
-      socket.off('state');  // Remove the event listener when component is unmounted
+      socket.off('joint state'); 
+      socket.off('base coords');
     };
   }, []);
 

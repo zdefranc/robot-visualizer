@@ -61,7 +61,7 @@ async fn on_connect(socket: SocketRef) {
     info!("socket connected: {}", socket.id);
 
     socket.on(
-        "set actuator state",
+        "set joint state",
         |Data::<JointState>(data), robot_lock: State<RobotLock>| async move {
             
             {

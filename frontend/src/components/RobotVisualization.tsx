@@ -47,14 +47,11 @@ function RobotVisualization(props: RobotVisualizationProps) {
   const robotStateRef = useRef<RobotState | null>(props.robotState); // Store the latest robot state
 
   // Update robotStateRef on every prop change
-  // Is this right?
   useEffect(() => {
     robotStateRef.current = props.robotState;
   }, [props.robotState]);
 
   useEffect(() => {
-    console.log("Mount");
-
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xeeeeee);
 
@@ -64,16 +61,31 @@ function RobotVisualization(props: RobotVisualizationProps) {
     camera.position.y = 3;
     camera.position.x = 3;
 
+    // Applys the grid.
     const gridHelper = new THREE.GridHelper(100, 100);
     gridHelper.position.y = 0;
     scene.add(gridHelper);
+
+    // X axis (Red)
+    const xDir = new THREE.Vector3(1, 0, 0); // Direction along X axis
+    const xArrow = new THREE.ArrowHelper(xDir, new THREE.Vector3(0, 0, 0), 1, 0xff0000); 
+    scene.add(xArrow);
+
+    // Y axis (Green)
+    const yDir = new THREE.Vector3(0, 1, 0); // Direction along Y axis
+    const yArrow = new THREE.ArrowHelper(yDir, new THREE.Vector3(0, 0, 0), 1, 0x00ff00); 
+    scene.add(yArrow);
+
+    // Z axis (Blue)
+    const zDir = new THREE.Vector3(0, 0, -1); // Direction along Z axis
+    const zArrow = new THREE.ArrowHelper(zDir, new THREE.Vector3(0, 0, 0), 1, 0x0000ff); 
+    scene.add(zArrow);
     
     // Create the renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth/2, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // use ref as a mount point of the Three.js scene instead of the document.body
     // This keeps multiple simulations from appearing.
     refContainer.current && refContainer.current.appendChild( renderer.domElement );
 
@@ -85,7 +97,6 @@ function RobotVisualization(props: RobotVisualizationProps) {
     light.position.set(5, 10, 7.5);
     scene.add(light);
 
-    // Create the robot arm parts (cylinders to represent each segment)
     const material = new THREE.MeshStandardMaterial({ color: 0x0077ff });
 
     // Base
@@ -164,7 +175,7 @@ function RobotVisualization(props: RobotVisualizationProps) {
       const state = robotStateRef.current;
       if (state) {
         swingJoint.rotation.y = THREE.MathUtils.degToRad(state.joint_state.swing_rotation_deg);
-        liftJoint.position.y = state.joint_state.lift_elevation_mm / 1000 + LIFT_ZERO; // Convert mm to meters
+        liftJoint.position.y = state.joint_state.lift_elevation_mm / 1000 + LIFT_ZERO;
         elbowJoint.rotation.x = THREE.MathUtils.degToRad(state.joint_state.elbow_rotation_deg);
         wristJoint.rotation.x = THREE.MathUtils.degToRad(state.joint_state.wrist_rotation_deg);
         gripperDynamic.position.y = (state.joint_state.gripper_open_mm/1000+GRIPPERS_HEIGHT);

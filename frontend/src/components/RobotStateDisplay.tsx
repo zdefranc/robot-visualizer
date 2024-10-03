@@ -1,4 +1,4 @@
-import { Coord4DOF, JointState, RobotState } from '../types/RobotTypes';
+import { Coord4DOF, RobotState } from '../types/RobotTypes';
 
 import styles from '../css/RobotStateDisplay.module.css'
 

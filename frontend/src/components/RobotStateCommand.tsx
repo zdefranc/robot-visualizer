@@ -100,30 +100,19 @@ export const RobotStateCommand = () => {
       <div>
         <h2 className={styles['title']}>Control Robot Actuators</h2>
         <form>
-          <label className={styles['state-label']}>
-            <text>Swing Rotation (degrees):</text>
-            <StateInput handleChange={handleJointChange} name='swing_rotation_deg'/>
-          </label>
+          <StateInput label_name="Swing Rotation (degrees):" handleChange={handleJointChange} name='swing_rotation_deg'/>
           <br className={styles['break']}/>
-          <label className={styles['state-label']}>
-          <text>Lift Elevation (mm):</text>
-            <StateInput handleChange={handleJointChange} name='lift_elevation_mm'/>
-          </label>
+          <StateInput label_name="Lift Elevation (mm):" handleChange={handleJointChange} name='lift_elevation_mm'/>
+          
           <br className={styles['break']}/>
-          <label className={styles['state-label']}>
-            <text>Elbow Rotation (degrees):</text>
-            <StateInput handleChange={handleJointChange} name='elbow_rotation_deg'/>
-          </label>
+          <StateInput label_name="Elbow Rotation (degrees):" handleChange={handleJointChange} name='elbow_rotation_deg'/>
+          
           <br className={styles['break']}/>
-          <label className={styles['state-label']}>
-            <text>Wrist Rotation (degrees):</text>
-            <StateInput handleChange={handleJointChange} name='wrist_rotation_deg'/>
-          </label>
+          <StateInput label_name="Wrist Rotation (degrees):" handleChange={handleJointChange} name='wrist_rotation_deg'/>
+          
           <br className={styles['break']}/>
-          <label className={styles['state-label']}>
-            <text>Gripper Opening (mm):</text>
-            <StateInput handleChange={handleJointChange} name='gripper_open_mm'/>
-          </label>
+          <StateInput label_name="Gripper Opening (mm):" handleChange={handleJointChange} name='gripper_open_mm'/>
+          
           <br className={styles['break']}/>
           <button className={styles['button']} type="button" onClick={sendJointState}>
             Send Joint State
@@ -134,25 +123,17 @@ export const RobotStateCommand = () => {
       <div>
         <h2 className={styles['title']}>Control Robot End Effector</h2>
         <form>
-          <label className={styles['state-label']}>
-            <text>X (m):</text>
-            <StateInput handleChange={handleEndEffectorChange} name='x'/>
-          </label>
+          <StateInput label_name="X (m):" handleChange={handleEndEffectorChange} name='x'/>
+          
           <br className={styles['break']}/>
-          <label className={styles['state-label']}>
-            <text>Y (m):</text>
-            <StateInput handleChange={handleEndEffectorChange} name='y'/>
-          </label>
+          <StateInput label_name="Y (m):" handleChange={handleEndEffectorChange} name='y'/>
+          
           <br className={styles['break']}/>
-          <label className={styles['state-label']}>
-            <text>Z (m):</text>
-            <StateInput handleChange={handleEndEffectorChange} name='z'/>
-          </label>
+          <StateInput label_name="Z (m):" handleChange={handleEndEffectorChange} name='z'/>
+          
           <br className={styles['break']}/>
-          <label className={styles['state-label']}>
-            <text>Theta (deg):</text>
-            <StateInput handleChange={handleEndEffectorChange} name='theta'/>
-          </label>
+          <StateInput label_name="Theta (deg):" handleChange={handleEndEffectorChange} name='theta'/>
+          
           <br className={styles['break']}/>
           <button className={styles['button']} type="button" onClick={sendCoordState}>
             Send Coord State
@@ -164,25 +145,14 @@ export const RobotStateCommand = () => {
       <div>
         <h2 className={styles['title']}>Control Robot Base</h2>
         <form>
-          <label className={styles['state-label']}>
-            <text>X (m):</text>
-            <StateInput handleChange={handleBaseCoordChange} name='x'/>
-          </label>
+          <StateInput label_name="X (m):" handleChange={handleBaseCoordChange} name='x'/>
           <br className={styles['break']}/>
-          <label className={styles['state-label']}>
-            <text>Y (m):</text>
-            <StateInput handleChange={handleBaseCoordChange} name='y'/>
-          </label>
+          <StateInput label_name="Y (m):" handleChange={handleBaseCoordChange} name='y'/>
           <br className={styles['break']}/>
-          <label className={styles['state-label']}>
-            <text>Z (m):</text>
-            <StateInput handleChange={handleBaseCoordChange} name='z'/>
-          </label>
+          <StateInput label_name="Z (m):" handleChange={handleBaseCoordChange} name='z'/>
           <br className={styles['break']}/>
-          <label className={styles['state-label']}>
-            <text>Theta (deg):</text>
-            <StateInput handleChange={handleBaseCoordChange} name='theta'/>
-          </label>
+          <StateInput label_name="Theta (deg):" handleChange={handleBaseCoordChange} name='theta'/>
+          
           <br className={styles['break']}/>
           <button className={styles['button']} type="button" onClick={sendBaseCoordState}>
             Send Coord State

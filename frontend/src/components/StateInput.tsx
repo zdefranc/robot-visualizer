@@ -5,6 +5,7 @@ import styles from '../css/RobotStateCommand.module.css'
 type StateInputProps = {
     handleChange: React.ChangeEventHandler<HTMLInputElement>;
     name: string,
+    label_name: string
 }
 
 
@@ -21,13 +22,16 @@ export const StateInput = (props: StateInputProps) => {
       };
 
     return (
-        <input 
-        className={styles['state-input']}
-        type='number'
-        step="any"
-        name={props.name}
-        value={jointState}
-        onChange={handleChange}
-      />
+        <label className={styles['state-label']}>
+            <text>{props.label_name}</text>
+            <input 
+                className={styles['state-input']}
+                type='number'
+                step="any"
+                name={props.name}
+                value={jointState}
+                onChange={handleChange}
+            />
+          </label>
     );
   };
